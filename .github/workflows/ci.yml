@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  api:
+    name: API — lint, build y tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: vozaac
+          POSTGRES_PASSWORD: vozaac_test
+          POSTGRES_DB: vozaac_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Compilar paquete compartido
+        run: npm run build --workspace @vozaac/shared
+
+      - name: Compilar API
+        run: npm run build --workspace @vozaac/api
+
+      - name: Tests unitarios
+        run: npm run test --workspace @vozaac/api
+
+      - name: Tests de integración
+        run: npm run test:integration --workspace @vozaac/api
+
+      - name: Verificar que las migraciones corren sobre PostgreSQL limpio
+        run: npm run migration:run --workspace @vozaac/api
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: vozaac
+          DB_PASSWORD: vozaac_test
+          DB_NAME: vozaac_test

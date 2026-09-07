@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vozaac-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vozaac}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vozaac_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-vozaac}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-vozaac} -d ${POSTGRES_DB:-vozaac}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Base separada para los tests de integración del Módulo 1.
+  # Efímera a propósito: sin volumen, se limpia al bajar el contenedor.
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: vozaac-postgres-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vozaac
+      POSTGRES_PASSWORD: vozaac_test
+      POSTGRES_DB: vozaac_test
+    ports:
+      - '${POSTGRES_TEST_PORT:-5433}:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U vozaac -d vozaac_test']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

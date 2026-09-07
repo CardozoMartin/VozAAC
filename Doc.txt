@@ -1,0 +1,52 @@
+Módulo 1 — Modelo de datos y backend base
+
+Qué incluye: entidades centrales en TypeORM/PostgreSQL.
+
+Usuario (perfil del niño/a: nombre, edad, foto, cuidador responsable)
+Perfil de cuidador/terapeuta (con rol: familia vs. profesional)
+Tablero (pertenece a un Usuario, tiene Categorías)
+Categoría (nombre, color, ícono, orden)
+Pictograma (imagen, texto, audio asociado, categoría, tablero)
+ConfiguraciónAccesibilidad (filtro anti-temblor, tamaño de grilla, velocidad de voz — por Usuario)
+RegistroDeUso (para el historial/reportes: qué pictogramas se usaron, cuándo)
+
+Testing: unit tests con Jest sobre los servicios (creación de tablero, validación de que un pictograma no se puede duplicar en la misma categoría, etc.) + tests de integración con una base de test (SQLite en memoria o PostgreSQL de test) para los repositorios.
+
+Módulo 2 — Autenticación y perfiles
+
+Qué incluye: login para cuidador/terapeuta, selector de perfil de usuario (imagen 2), modo PIN para bloquear el modo terapeuta.
+Requiere: JWT o sesión simple (no necesitás algo tan robusto como un ERP comercial), endpoint para listar perfiles asociados a un cuidador.
+Testing: e2e con supertest en NestJS (login correcto/incorrecto, PIN correcto/incorrecto, que un cuidador no pueda ver perfiles de otro cuidador — esto es importante por privacidad de datos sensibles).
+
+Módulo 3 — Tablero principal (Comunicador)
+
+Qué incluye: grilla de pictogramas, barra de frase, botón hablar, categorías con tabs, TTS.
+Requiere: componente de grilla configurable en React Native (2x3, 2x2, 3x4 según Módulo 5), integración con TTS nativo (expo-speech si usás Expo).
+Testing: tests de componente con React Native Testing Library (tocar un pictograma agrega a la frase, tocar "limpiar" vacía la frase), y ahí es clave sumar testing de usabilidad real con 2-3 chicos si conseguís el piloto con la escuela — esto no lo reemplaza ningún test automatizado.
+
+Módulo 4 — Editor de pictogramas (modo terapeuta)
+
+Qué incluye: CRUD de pictogramas, subida de foto propia, grabación de audio propio, organización de categorías, buscador.
+Requiere: endpoint de upload de imágenes/audio (podés arrancar guardando en el filesystem del server o en un bucket tipo S3/Supabase Storage si querés algo más prolijo para la demo), integración con banco ARASAAC para pictogramas predefinidos.
+Testing: unit tests de validación (tamaño máximo de imagen, formatos permitidos) + test manual de que el modo terapeuta esté bien aislado del modo comunicador (que un cambio no se vea reflejado hasta "Guardar Cambios", como mostraste en el diseño).
+
+Módulo 5 — Accesibilidad configurable
+
+Qué incluye: filtro anti-temblor, tamaño de cuadrícula, velocidad y tipo de voz, modo bajo estímulo (paleta apagada) que charlamos antes.
+Requiere: lógica de debounce/hold-to-confirm para el filtro anti-temblor (esto es la parte más técnica y linda de defender: detectar toque sostenido vs. accidental).
+Testing: unit test específico simulando toques rápidos vs. sostenidos para validar el filtro — este es un buen candidato para mostrar en la defensa con un test automatizado corriendo en vivo.
+
+Módulo 6 — Historial y reportes (valor para el terapeuta)
+
+Qué incluye: qué pictogramas usa más el usuario, evolución de vocabulario en el tiempo, exportable o visualizable en gráfico simple.
+Requiere: agregaciones sobre RegistroDeUso, un par de gráficos simples en el frontend (podés usar Recharts).
+Testing: unit tests sobre las queries de agregación (que cuenten bien, que filtren por rango de fechas).
+
+Módulo 7 — Offline y sincronización
+
+Qué incluye: que el comunicador funcione sin conexión (guardar en local storage/SQLite del dispositivo) y sincronice cuando vuelve la conexión.
+Testing: simular corte de red durante uso y verificar que no se pierdan datos — este módulo conviene dejarlo para el final, es el más complejo y podés entregarlo como "trabajo futuro" en la tesis si el tiempo aprieta.
+
+Módulo 8 — Validación con usuarios reales
+
+No es código, pero es el módulo más importante para tu defensa: conseguir que 2-3 familias o una escuela especial prueben el comunicador un par de semanas, y documentar qué funcionó y qué no. Esto es lo que convierte el proyecto de "hice una app" a "resolví un problema validado".
