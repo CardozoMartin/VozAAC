@@ -11,7 +11,7 @@ export function buildDataSourceOptions(env: NodeJS.ProcessEnv): TypeOrmModuleOpt
   return {
     type: 'postgres',
     host: env.DB_HOST ?? 'localhost',
-    port: parseInt(env.DB_PORT ?? '5432', 10),
+    port: parseInt(env.DB_PORT ?? '5442', 10),
     username: env.DB_USER ?? 'vozaac',
     password: env.DB_PASSWORD ?? 'vozaac_dev',
     database: env.DB_NAME ?? 'vozaac',

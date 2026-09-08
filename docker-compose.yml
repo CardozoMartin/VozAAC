@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vozaac_dev}
       POSTGRES_DB: ${POSTGRES_DB:-vozaac}
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - '${POSTGRES_PORT:-5442}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -28,7 +28,7 @@ services:
       POSTGRES_PASSWORD: vozaac_test
       POSTGRES_DB: vozaac_test
     ports:
-      - '${POSTGRES_TEST_PORT:-5433}:5432'
+      - '${POSTGRES_TEST_PORT:-5443}:5432'
     tmpfs:
       - /var/lib/postgresql/data
     healthcheck:

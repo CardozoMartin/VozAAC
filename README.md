@@ -68,7 +68,7 @@ npm run seed --workspace @vozaac/api
 npm run api
 ```
 
-La API queda en `http://localhost:3000/api`.
+La API queda en `http://localhost:3001/api`.
 
 ## Tests
 
@@ -83,7 +83,7 @@ Los tests unitarios mockean los repositorios y verifican reglas de negocio. Los
 de integración corren contra SQLite en memoria, así que no necesitan Docker:
 validan relaciones, cascadas e índices únicos. Las agregaciones del Módulo 6,
 que usan funciones propias de PostgreSQL, van a necesitar la base de test de
-`docker-compose` (puerto 5433).
+`docker-compose` (puerto 5443).
 
 ## Migraciones
 
