@@ -12,7 +12,7 @@ Proyecto de tesis. El plan completo por módulos está en [Doc.txt](Doc.txt).
 | Módulo | Qué incluye                            | Estado                                 |
 | ------ | -------------------------------------- | -------------------------------------- |
 | 1      | Modelo de datos y backend base         | Entidades, migración y tests listos    |
-| 2      | Autenticación y perfiles               | Pendiente                              |
+| 2      | Autenticación y perfiles               | JWT, PIN y aislamiento listos          |
 | 3      | Tablero principal (comunicador)        | Pendiente                              |
 | 4      | Editor de pictogramas (modo terapeuta) | Pendiente                              |
 | 5      | Accesibilidad configurable             | Campos en la base; lógica pendiente    |
@@ -68,7 +68,37 @@ npm run seed --workspace @vozaac/api
 npm run api
 ```
 
-La API queda en `http://localhost:3001/api`.
+La API queda en `http://localhost:3010/api`.
+
+## Endpoints
+
+Autenticación (Módulo 2). Todo lo que no sea `register` o `login` necesita el
+header `Authorization: Bearer <token>`.
+
+| Método | Ruta                   | Qué hace                                   |
+| ------ | ---------------------- | ------------------------------------------ |
+| POST   | `/api/auth/register`   | Crea un cuidador y devuelve el token       |
+| POST   | `/api/auth/login`      | Valida credenciales y devuelve el token    |
+| GET    | `/api/auth/me`         | Datos del cuidador autenticado             |
+| GET    | `/api/auth/pin`        | Si ya configuró el PIN del modo terapeuta  |
+| PUT    | `/api/auth/pin`        | Define o reemplaza el PIN                  |
+| POST   | `/api/auth/pin/verify` | Verifica el PIN                            |
+| GET    | `/api/users`           | Perfiles del cuidador (selector de perfil) |
+| GET    | `/api/users/:id`       | Un perfil, solo si es del cuidador         |
+
+Dos decisiones que vale la pena señalar, porque son de privacidad y no de
+comodidad:
+
+- Login y registro responden lo mismo ante un email inexistente que ante una
+  contraseña incorrecta. Distinguirlos permitiría averiguar qué familias tienen
+  cuenta.
+- Pedir el perfil de otro cuidador devuelve 404, no 403. Un 403 confirmaría que
+  ese perfil existe, y son datos de salud de menores.
+
+El PIN no emite un token propio: es la barrera para que el chico/a no entre al
+editor sin querer, no una segunda autenticación. Por eso un PIN incorrecto
+devuelve `200 {"valid": false}` y no un 401 — el cuidador sigue con su sesión
+válida, solo se equivocó al tipear.
 
 ## Tests
 
@@ -76,8 +106,13 @@ La API queda en `http://localhost:3001/api`.
 npm test                                          # todo el monorepo
 npm run test --workspace @vozaac/api              # unitarios (servicios)
 npm run test:integration --workspace @vozaac/api  # integración (repositorios)
+npm run test:e2e --workspace @vozaac/api          # e2e (endpoints con supertest)
 npm run test:cov --workspace @vozaac/api          # con cobertura
 ```
+
+Los e2e del Módulo 2 levantan la app entera contra SQLite y ejercitan los
+endpoints con supertest: login correcto e incorrecto, PIN correcto e
+incorrecto, y que un cuidador no pueda ver los perfiles de otro.
 
 Los tests unitarios mockean los repositorios y verifican reglas de negocio. Los
 de integración corren contra SQLite en memoria, así que no necesitan Docker:

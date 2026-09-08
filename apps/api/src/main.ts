@@ -18,7 +18,7 @@ async function bootstrap() {
   // La app móvil corre en otro origen durante el desarrollo con Expo.
   app.enableCors();
 
-  const port = config.get<number>('API_PORT', 3001);
+  const port = config.get<number>('API_PORT', 3010);
   await app.listen(port);
   console.log(`VozAAC API escuchando en http://localhost:${port}/api`);
 }
