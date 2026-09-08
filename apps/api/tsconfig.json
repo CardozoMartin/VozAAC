@@ -18,11 +18,13 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
+    // @vozaac/shared se resuelve por el symlink de npm workspaces contra su
+    // dist compilado. Apuntarlo al source subiría el rootDir común fuera de
+    // apps/api y anidaría la salida en dist/apps/api/src.
     "paths": {
-      "@vozaac/shared": ["../../packages/shared/src/index.ts"],
       "src/*": ["src/*"]
     }
   },
-  "include": ["src/**/*", "test/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test"]
 }
