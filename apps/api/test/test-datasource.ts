@@ -24,7 +24,7 @@ export const TEST_ENTITIES = [
  * cualquier máquina y en CI sin levantar Docker. Para lo que el Módulo 1 tiene
  * que verificar —relaciones, cascadas e índices únicos— alcanza. Las consultas
  * de agregación del Módulo 6, que usan funciones propias de Postgres, van a
- * necesitar la base de test de docker-compose (puerto 5433).
+ * necesitar la base de test de docker-compose (puerto 5443).
  *
  * synchronize: true acá es correcto: la base se crea y se descarta en cada
  * corrida, no hay esquema que preservar.

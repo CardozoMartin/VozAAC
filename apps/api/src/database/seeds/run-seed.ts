@@ -1,3 +1,4 @@
+import * as bcrypt from 'bcrypt';
 import { CaregiverRole, PictogramSource } from '@vozaac/shared';
 import dataSource from '../data-source';
 import { Caregiver } from '../../caregivers/entities/caregiver.entity';
@@ -15,9 +16,12 @@ import { AccessibilitySettings } from '../../accessibility/entities/accessibilit
  * terapeutas ya reconocen: verde para acciones, naranja para sustantivos,
  * azul para descriptores, rosa para expresiones sociales.
  *
- * No crea contraseñas reales: el hash es un valor de relleno hasta que el
- * Módulo 2 incorpore bcrypt.
+ * La contraseña del cuidador de demo es fija y está a la vista a propósito:
+ * estos datos son para desarrollo y para la defensa, nunca para producción.
  */
+
+/** Contraseña del cuidador de demostración. Sólo para desarrollo. */
+const DEMO_PASSWORD = 'vozaac-demo';
 
 const VOCABULARY: Record<string, { color: string; words: string[] }> = {
   Necesidades: {
@@ -64,8 +68,7 @@ async function seed(): Promise<void> {
   const caregiver = await caregiverRepo.save(
     caregiverRepo.create({
       email,
-      // Reemplazar por un hash bcrypt real cuando esté el Módulo 2.
-      passwordHash: 'seed-placeholder',
+      passwordHash: await bcrypt.hash(DEMO_PASSWORD, 12),
       fullName: 'Terapeuta de demostración',
       role: CaregiverRole.THERAPIST,
     }),
@@ -107,7 +110,7 @@ async function seed(): Promise<void> {
   console.log(
     `Seed completo: 1 cuidador, 1 usuario, ${categoryOrder} categorías, ${pictogramCount} pictogramas`,
   );
-  console.log(`Cuidador de demo: ${email}`);
+  console.log(`Cuidador de demo: ${email} / ${DEMO_PASSWORD}`);
 
   await dataSource.destroy();
 }

@@ -40,3 +40,13 @@ export const THERAPIST_PIN_LENGTH = 4;
 
 /** Cantidad máxima de pictogramas que caben en la barra de frase (Módulo 3). */
 export const MAX_PHRASE_LENGTH = 12;
+
+/** Reglas del PIN que desbloquea el modo terapeuta (Módulo 2). */
+export const THERAPIST_PIN = {
+  length: 4,
+  /** Solo dígitos: el teclado numérico es más accesible en tablet. */
+  pattern: /^\d{4}$/,
+} as const;
+
+/** Largo mínimo de la contraseña del cuidador (Módulo 2). */
+export const PASSWORD_MIN_LENGTH = 8;

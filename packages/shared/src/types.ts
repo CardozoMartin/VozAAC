@@ -95,3 +95,24 @@ export interface VocabularyGrowthPoint {
   distinctPictograms: number;
   totalTaps: number;
 }
+
+/** Respuesta del login y del registro (Módulo 2). */
+export interface AuthResponse {
+  accessToken: string;
+  caregiver: Caregiver;
+}
+
+/** Contenido del JWT. `sub` es el id del cuidador, por convención de JWT. */
+export interface JwtPayload {
+  sub: string;
+  email: string;
+  role: CaregiverRole;
+}
+
+/**
+ * Perfil de niño/a tal como lo ve el selector de perfiles (Módulo 2).
+ * Incluye la edad ya calculada para que la app no tenga que derivarla.
+ */
+export interface UserProfile extends User {
+  age: number | null;
+}

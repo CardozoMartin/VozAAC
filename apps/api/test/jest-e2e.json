@@ -6,6 +6,7 @@
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "testEnvironment": "node",
+  "setupFiles": ["<rootDir>/test/setup-test-env.ts"],
   "moduleNameMapper": {
     "^@vozaac/shared$": "<rootDir>/../../packages/shared/src/index.ts",
     "^src/(.*)$": "<rootDir>/src/$1"
