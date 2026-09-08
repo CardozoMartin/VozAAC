@@ -5,19 +5,25 @@ import type { UserProfile } from '@vozaac/shared';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { ProfilePickerScreen } from './src/screens/ProfilePickerScreen';
 import { CommunicatorScreen } from './src/screens/CommunicatorScreen';
+import { PinGateScreen } from './src/screens/PinGateScreen';
+import { EditorScreen } from './src/screens/EditorScreen';
 import { session } from './src/state/session';
 import { paletteFor } from './src/theme';
+
+/** Dónde está parada la app dentro del perfil elegido. */
+type Mode = 'communicator' | 'pin' | 'editor';
 
 /**
  * Navegación de la app.
  *
- * Con tres pantallas encadenadas —login, selector de perfil, comunicador— un
- * router sería más maquinaria de la que hace falta. Cuando llegue el editor
- * del Módulo 4 conviene revisar esta decisión.
+ * Cinco pantallas encadenadas y un router sería más maquinaria de la que hace
+ * falta: el flujo es lineal y no hay historial que manejar. Si el Módulo 6
+ * suma pantallas de reportes conviene revisar esta decisión.
  */
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [mode, setMode] = useState<Mode>('communicator');
   const [restoring, setRestoring] = useState(true);
   const palette = paletteFor(undefined);
 
@@ -37,31 +43,63 @@ export default function App() {
   async function handleLogout() {
     await session.clear();
     setProfile(null);
+    setMode('communicator');
     setToken(null);
   }
 
   async function handleSelectProfile(selected: UserProfile) {
     await session.saveProfile(selected.id);
     setProfile(selected);
+    setMode('communicator');
+  }
+
+  function renderContent() {
+    if (restoring) {
+      return <ActivityIndicator style={styles.centered} size="large" testID="restoring-session" />;
+    }
+    if (!token) {
+      return <LoginScreen onLoggedIn={handleLoggedIn} />;
+    }
+    if (!profile) {
+      return (
+        <ProfilePickerScreen token={token} onSelect={handleSelectProfile} onLogout={handleLogout} />
+      );
+    }
+    if (mode === 'pin') {
+      return (
+        <PinGateScreen
+          token={token}
+          onUnlocked={() => setMode('editor')}
+          onCancel={() => setMode('communicator')}
+        />
+      );
+    }
+    if (mode === 'editor') {
+      return (
+        <EditorScreen
+          token={token}
+          userId={profile.id}
+          // Al salir se vuelve al comunicador, no al selector: el editor es una
+          // parada dentro de la sesión del mismo perfil.
+          onExit={() => setMode('communicator')}
+        />
+      );
+    }
+    return (
+      <CommunicatorScreen
+        token={token}
+        userId={profile.id}
+        profileName={profile.name}
+        onExit={() => setProfile(null)}
+        onOpenEditor={() => setMode('pin')}
+      />
+    );
   }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
       <StatusBar style="auto" />
-      {restoring ? (
-        <ActivityIndicator style={styles.centered} size="large" testID="restoring-session" />
-      ) : !token ? (
-        <LoginScreen onLoggedIn={handleLoggedIn} />
-      ) : !profile ? (
-        <ProfilePickerScreen token={token} onSelect={handleSelectProfile} onLogout={handleLogout} />
-      ) : (
-        <CommunicatorScreen
-          token={token}
-          userId={profile.id}
-          profileName={profile.name}
-          onExit={() => setProfile(null)}
-        />
-      )}
+      {renderContent()}
     </SafeAreaView>
   );
 }

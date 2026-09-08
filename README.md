@@ -14,7 +14,7 @@ Proyecto de tesis. El plan completo por módulos está en [Doc.txt](Doc.txt).
 | 1      | Modelo de datos y backend base         | Entidades, migración y tests listos    |
 | 2      | Autenticación y perfiles               | JWT, PIN y aislamiento listos          |
 | 3      | Tablero principal (comunicador)        | App Expo con grilla, frase y TTS       |
-| 4      | Editor de pictogramas (modo terapeuta) | Pendiente                              |
+| 4      | Editor de pictogramas (modo terapeuta) | CRUD, uploads, ARASAAC y editor listos |
 | 5      | Accesibilidad configurable             | Campos en la base; lógica pendiente    |
 | 6      | Historial y reportes                   | Entidad lista; agregaciones pendientes |
 | 7      | Offline y sincronización               | Pendiente                              |
@@ -119,6 +119,33 @@ se valida que el perfil sea del cuidador del token.
 | POST   | `/api/users/:userId/usage`           | Registra un evento de uso                 |
 | POST   | `/api/users/:userId/usage/batch`     | Registra un lote de eventos               |
 
+Editor del modo terapeuta (Módulo 4). Cada operación verifica que el recurso
+cuelgue de un perfil del cuidador, siguiendo la cadena pictograma → categoría →
+tablero → perfil.
+
+| Método | Ruta                                      | Qué hace                           |
+| ------ | ----------------------------------------- | ---------------------------------- |
+| POST   | `/api/categories`                         | Crea una categoría                 |
+| PATCH  | `/api/categories/:id`                     | Renombra o recolorea               |
+| DELETE | `/api/categories/:id`                     | Borra la categoría y sus pictos    |
+| GET    | `/api/boards/:boardId/categories`         | Categorías del tablero             |
+| PATCH  | `/api/boards/:boardId/categories/reorder` | Reordena los tabs                  |
+| POST   | `/api/pictograms`                         | Crea un pictograma                 |
+| PATCH  | `/api/pictograms/:id`                     | Edita, o lo mueve de categoría     |
+| DELETE | `/api/pictograms/:id`                     | Borra el pictograma y sus archivos |
+| GET    | `/api/pictograms/search?q=`               | Buscador del editor                |
+| GET    | `/api/categories/:id/pictograms`          | Pictogramas de la categoría        |
+| PATCH  | `/api/categories/:id/pictograms/reorder`  | Reordena la grilla                 |
+| POST   | `/api/uploads/image`                      | Sube una imagen (máx. 5 MB)        |
+| POST   | `/api/uploads/audio`                      | Sube un audio (máx. 2 MB)          |
+| GET    | `/api/arasaac/search?q=`                  | Busca en el banco ARASAAC          |
+
+Los archivos subidos se guardan en `UPLOAD_DIR` y se sirven bajo `/uploads`.
+El nombre lo genera el servidor y nunca se usa el que manda el cliente: un
+nombre como `../../.env` escaparía del directorio de subidas. Los pictogramas
+de ARASAAC referencian la imagen en su CDN en vez de copiarla, así el tablero
+no duplica miles de PNG.
+
 Dos decisiones que vale la pena señalar, porque son de privacidad y no de
 comodidad:
 
@@ -154,6 +181,11 @@ Los del comunicador usan React Native Testing Library y cubren lo que pide el
 Doc: que tocar un pictograma lo agregue a la frase y que "limpiar" la vacíe.
 El TTS se mockea, así que verifican qué texto se mandó a decir sin depender
 del motor de voz del dispositivo.
+
+Los del Módulo 4 verifican las validaciones de subida (formato y tamaño, más
+que un nombre de archivo no pueda escapar del directorio) y el aislamiento del
+borrador del editor: que agregar, editar o borrar no escriban nada hasta
+"Guardar cambios".
 
 Los tests unitarios mockean los repositorios y verifican reglas de negocio. Los
 de integración corren contra SQLite en memoria, así que no necesitan Docker:

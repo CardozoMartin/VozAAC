@@ -15,10 +15,12 @@ interface Props {
   userId: string;
   profileName: string;
   onExit: () => void;
+  /** Abre el modo terapeuta, previo PIN. Ausente si el cuidador no configuró uno. */
+  onOpenEditor?: () => void;
 }
 
 /** Pantalla principal: el comunicador que usa el chico/a (Módulo 3). */
-export function CommunicatorScreen({ token, userId, profileName, onExit }: Props) {
+export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenEditor }: Props) {
   const [board, setBoard] = useState<Board | null>(null);
   const [settings, setSettings] = useState<AccessibilitySettings | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -127,15 +129,28 @@ export function CommunicatorScreen({ token, userId, profileName, onExit }: Props
 
       <View style={[styles.footer, { borderColor: palette.border }]}>
         <Text style={[styles.profileName, { color: palette.textMuted }]}>{profileName}</Text>
-        <Pressable
-          testID="button-exit"
-          accessibilityRole="button"
-          accessibilityLabel="Cambiar de perfil"
-          onPress={onExit}
-          style={[styles.exitButton, { borderColor: palette.border }]}
-        >
-          <Text style={{ color: palette.textMuted }}>Cambiar perfil</Text>
-        </Pressable>
+        <View style={styles.footerActions}>
+          {onOpenEditor && (
+            <Pressable
+              testID="button-open-editor"
+              accessibilityRole="button"
+              accessibilityLabel="Modo terapeuta"
+              onPress={onOpenEditor}
+              style={[styles.exitButton, { borderColor: palette.border }]}
+            >
+              <Text style={{ color: palette.textMuted }}>Modo terapeuta</Text>
+            </Pressable>
+          )}
+          <Pressable
+            testID="button-exit"
+            accessibilityRole="button"
+            accessibilityLabel="Cambiar de perfil"
+            onPress={onExit}
+            style={[styles.exitButton, { borderColor: palette.border }]}
+          >
+            <Text style={{ color: palette.textMuted }}>Cambiar perfil</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -154,6 +169,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   profileName: { fontSize: 14 },
+  footerActions: { flexDirection: 'row', gap: spacing.sm },
   exitButton: {
     borderWidth: 1,
     borderRadius: 8,

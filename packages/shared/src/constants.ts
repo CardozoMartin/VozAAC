@@ -35,10 +35,12 @@ export const UPLOAD_LIMITS = {
   },
 } as const;
 
-/** Longitud del PIN que bloquea el modo terapeuta (Módulo 2). */
-export const THERAPIST_PIN_LENGTH = 4;
-
-/** Cantidad máxima de pictogramas que caben en la barra de frase (Módulo 3). */
+/**
+ * Cantidad máxima de pictogramas en la barra de frase (Módulo 3).
+ *
+ * No es una limitación técnica: una frase más larga que esto ya no se lee de
+ * un vistazo en la barra, y para el uso AAC habitual doce símbolos sobran.
+ */
 export const MAX_PHRASE_LENGTH = 12;
 
 /** Reglas del PIN que desbloquea el modo terapeuta (Módulo 2). */

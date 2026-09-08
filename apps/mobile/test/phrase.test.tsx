@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react-native';
-import { PictogramSource, type Pictogram } from '@vozaac/shared';
+import { MAX_PHRASE_LENGTH, PictogramSource, type Pictogram } from '@vozaac/shared';
 import { usePhrase } from '../src/state/usePhrase';
 
 function pictograma(id: string, text: string): Pictogram {
@@ -63,6 +63,19 @@ describe('usePhrase', () => {
     act(() => result.current.removeLast());
 
     expect(result.current.pictograms).toEqual([]);
+  });
+
+  it('deja de agregar al llegar al tope de la barra', () => {
+    const { result } = renderHook(() => usePhrase());
+
+    act(() => {
+      for (let i = 0; i < MAX_PHRASE_LENGTH + 3; i += 1) {
+        result.current.add(pictograma(String(i), `palabra${i}`));
+      }
+    });
+
+    // Más allá del tope la barra ya no se lee de un vistazo.
+    expect(result.current.pictograms).toHaveLength(MAX_PHRASE_LENGTH);
   });
 
   it('vacía la frase al limpiar', () => {

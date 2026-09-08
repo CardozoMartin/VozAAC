@@ -3,9 +3,33 @@ import type {
   AuthResponse,
   Board,
   AccessibilitySettings,
+  ArasaacPictogram,
+  Category,
+  Pictogram,
+  PictogramSource,
   UserProfile,
   UsageEventType,
 } from '@vozaac/shared';
+
+/** Campos con los que el editor crea o edita una categoría. */
+export interface NewCategory {
+  name: string;
+  boardId: string;
+  color?: string;
+  icon?: string | null;
+  order?: number;
+}
+
+/** Campos con los que el editor crea o edita un pictograma. */
+export interface NewPictogram {
+  text: string;
+  imageUrl: string;
+  categoryId: string;
+  audioUrl?: string | null;
+  source?: PictogramSource;
+  arasaacId?: number;
+  order?: number;
+}
 
 /**
  * URL de la API.
@@ -92,4 +116,65 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ events }),
     }),
+
+  // --- Editor del modo terapeuta (Módulo 4) ---
+
+  createCategory: (token: string, input: NewCategory) =>
+    request<Category>('/categories', token, { method: 'POST', body: JSON.stringify(input) }),
+
+  updateCategory: (token: string, id: string, changes: Partial<NewCategory>) =>
+    request<Category>(`/categories/${id}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify(changes),
+    }),
+
+  deleteCategory: (token: string, id: string) =>
+    request<void>(`/categories/${id}`, token, { method: 'DELETE' }),
+
+  createPictogram: (token: string, input: NewPictogram) =>
+    request<Pictogram>('/pictograms', token, { method: 'POST', body: JSON.stringify(input) }),
+
+  updatePictogram: (token: string, id: string, changes: Partial<NewPictogram>) =>
+    request<Pictogram>(`/pictograms/${id}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify(changes),
+    }),
+
+  deletePictogram: (token: string, id: string) =>
+    request<void>(`/pictograms/${id}`, token, { method: 'DELETE' }),
+
+  searchPictograms: (token: string, term: string) =>
+    request<Pictogram[]>(`/pictograms/search?q=${encodeURIComponent(term)}`, token),
+
+  searchArasaac: (token: string, term: string) =>
+    request<ArasaacPictogram[]>(`/arasaac/search?q=${encodeURIComponent(term)}`, token),
+
+  /**
+   * Sube una imagen o un audio y devuelve su URL.
+   *
+   * Va como multipart y no como JSON, así que se arma un FormData a mano y se
+   * deja que fetch ponga el Content-Type con su boundary.
+   */
+  async upload(
+    token: string,
+    kind: 'image' | 'audio',
+    file: { uri: string; name: string; type: string },
+  ): Promise<{ url: string }> {
+    const form = new FormData();
+    // React Native acepta este objeto como parte de un FormData aunque no sea
+    // un Blob; por eso el cast.
+    form.append('file', file as unknown as Blob);
+
+    const response = await fetch(`${API_URL}/uploads/${kind}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { message?: string } | null;
+      throw new ApiError(body?.message ?? 'No se pudo subir el archivo', response.status);
+    }
+    return (await response.json()) as { url: string };
+  },
 };

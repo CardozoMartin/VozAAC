@@ -116,3 +116,10 @@ export interface JwtPayload {
 export interface UserProfile extends User {
   age: number | null;
 }
+
+/** Resultado de una búsqueda en el banco ARASAAC (Módulo 4). */
+export interface ArasaacPictogram {
+  id: number;
+  text: string;
+  imageUrl: string;
+}
