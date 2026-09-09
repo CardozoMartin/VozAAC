@@ -4,6 +4,7 @@ import { GRID_DIMENSIONS, GridSize, type Pictogram } from '@vozaac/shared';
 import { PictogramCell } from './PictogramCell';
 import type { Palette } from '../theme';
 import { spacing } from '../theme';
+import type { TremorFilterOptions } from '../state/useTremorFilter';
 
 interface Props {
   pictograms: Pictogram[];
@@ -11,6 +12,8 @@ interface Props {
   color: string;
   palette: Palette;
   onSelect: (pictogram: Pictogram) => void;
+  /** Configuración del filtro anti-temblor (Módulo 5). */
+  tremor: TremorFilterOptions;
 }
 
 /**
@@ -23,7 +26,14 @@ interface Props {
  * Los pictogramas que no entran en la página quedan fuera por ahora; la
  * paginación llega con el editor del Módulo 4.
  */
-export function PictogramGrid({ pictograms, gridSize, color, palette, onSelect }: Props) {
+export function PictogramGrid({
+  pictograms,
+  gridSize,
+  color,
+  palette,
+  onSelect,
+  tremor,
+}: Props) {
   const { columns, rows } = GRID_DIMENSIONS[gridSize];
 
   const grid = useMemo(() => {
@@ -54,6 +64,7 @@ export function PictogramGrid({ pictograms, gridSize, color, palette, onSelect }
               color={color}
               palette={palette}
               onPress={onSelect}
+              tremor={tremor}
             />
           ))}
           {/* Rellena la última fila para que las celdas no se estiren de más. */}

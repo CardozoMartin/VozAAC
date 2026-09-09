@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { GridSize, UsageEventType } from '@vozaac/shared';
+import { ColorMode, GridSize, TREMOR_FILTER, UsageEventType } from '@vozaac/shared';
 import { AuthModule } from '../src/auth/auth.module';
 import { UsersModule } from '../src/users/users.module';
 import { BoardsModule } from '../src/boards/boards.module';
@@ -197,6 +197,143 @@ describe('Comunicador (e2e)', () => {
         .get(`/api/users/${ajeno.user.id}/accessibility`)
         .set('Authorization', `Bearer ${propio.token}`)
         .expect(404);
+    });
+  });
+
+  /** Edición de la configuración (Módulo 5). */
+  describe('PATCH /api/users/:userId/accessibility', () => {
+    it('guarda un cambio parcial sin tocar el resto', async () => {
+      const { token, user } = await crearEscenario('m5a@vozaac.local');
+
+      const response = await request(app.getHttpServer())
+        .patch(`/api/users/${user.id}/accessibility`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ gridSize: GridSize.GRID_2X2 })
+        .expect(200);
+
+      expect(response.body.gridSize).toBe(GridSize.GRID_2X2);
+      // La velocidad de voz no viajaba en el PATCH y conserva su default.
+      expect(response.body.speechRate).toBe(1);
+    });
+
+    it('crea la configuración si el PATCH llega antes del primer GET', async () => {
+      const { token, user } = await crearEscenario('m5b@vozaac.local');
+
+      // El terapeuta entra a los ajustes sin haber abierto el comunicador: no
+      // hay fila todavía, y un update directo no tendría qué actualizar.
+      const response = await request(app.getHttpServer())
+        .patch(`/api/users/${user.id}/accessibility`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ colorMode: ColorMode.LOW_STIMULUS })
+        .expect(200);
+
+      expect(response.body.colorMode).toBe(ColorMode.LOW_STIMULUS);
+    });
+
+    it('persiste el cambio para la lectura siguiente', async () => {
+      const { token, user } = await crearEscenario('m5c@vozaac.local');
+      const url = `/api/users/${user.id}/accessibility`;
+
+      await request(app.getHttpServer())
+        .patch(url)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ tremorFilterEnabled: true, holdToConfirmMs: 450 })
+        .expect(200);
+
+      const response = await request(app.getHttpServer())
+        .get(url)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(response.body.tremorFilterEnabled).toBe(true);
+      expect(response.body.holdToConfirmMs).toBe(450);
+    });
+
+    it('no crea una fila nueva al editar', async () => {
+      const { token, user } = await crearEscenario('m5d@vozaac.local');
+      const url = `/api/users/${user.id}/accessibility`;
+
+      const inicial = await request(app.getHttpServer())
+        .get(url)
+        .set('Authorization', `Bearer ${token}`);
+
+      const editada = await request(app.getHttpServer())
+        .patch(url)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ speechRate: 0.8 });
+
+      expect(editada.body.id).toBe(inicial.body.id);
+    });
+
+    it('acepta volver a la voz del sistema con voiceId en null', async () => {
+      const { token, user } = await crearEscenario('m5e@vozaac.local');
+      const url = `/api/users/${user.id}/accessibility`;
+
+      await request(app.getHttpServer())
+        .patch(url)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ voiceId: 'es-AR-x-sfb-local' })
+        .expect(200);
+
+      const response = await request(app.getHttpServer())
+        .patch(url)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ voiceId: null })
+        .expect(200);
+
+      expect(response.body.voiceId).toBeNull();
+    });
+
+    it('rechaza un tiempo de sostenido fuera de rango', async () => {
+      const { token, user } = await crearEscenario('m5f@vozaac.local');
+
+      await request(app.getHttpServer())
+        .patch(`/api/users/${user.id}/accessibility`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ holdToConfirmMs: TREMOR_FILTER.holdToConfirmMs.max + 1 })
+        .expect(400);
+    });
+
+    it('rechaza una velocidad de voz fuera de rango', async () => {
+      const { token, user } = await crearEscenario('m5g@vozaac.local');
+
+      await request(app.getHttpServer())
+        .patch(`/api/users/${user.id}/accessibility`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ speechRate: 5 })
+        .expect(400);
+    });
+
+    it('rechaza un tamaño de grilla que no existe', async () => {
+      const { token, user } = await crearEscenario('m5h@vozaac.local');
+
+      await request(app.getHttpServer())
+        .patch(`/api/users/${user.id}/accessibility`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ gridSize: '9x9' })
+        .expect(400);
+    });
+
+    it('no deja editar la configuración de un perfil ajeno', async () => {
+      const ajeno = await crearEscenario('m5i@vozaac.local');
+      const propio = await crearEscenario('m5j@vozaac.local');
+
+      // 404 y no 403, por lo mismo que en las lecturas: un 403 confirmaría
+      // que ese perfil existe.
+      await request(app.getHttpServer())
+        .patch(`/api/users/${ajeno.user.id}/accessibility`)
+        .set('Authorization', `Bearer ${propio.token}`)
+        .send({ gridSize: GridSize.GRID_2X2 })
+        .expect(404);
+    });
+
+    it('no deja editar sin token', async () => {
+      const { user } = await crearEscenario('m5k@vozaac.local');
+
+      await request(app.getHttpServer())
+        .patch(`/api/users/${user.id}/accessibility`)
+        .send({ gridSize: GridSize.GRID_2X2 })
+        .expect(401);
     });
   });
 

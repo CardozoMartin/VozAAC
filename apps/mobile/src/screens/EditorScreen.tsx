@@ -21,6 +21,8 @@ interface Props {
   token: string;
   userId: string;
   onExit: () => void;
+  /** Abre los ajustes de accesibilidad (Módulo 5), dentro del modo terapeuta. */
+  onOpenAccessibility?: () => void;
 }
 
 /**
@@ -30,7 +32,7 @@ interface Props {
  * editar con el chico/a al lado, y que los pictogramas cambien bajo su dedo
  * mientras tanto sería confuso para quien está comunicándose.
  */
-export function EditorScreen({ token, userId, onExit }: Props) {
+export function EditorScreen({ token, userId, onExit, onOpenAccessibility }: Props) {
   const [board, setBoard] = useState<Board | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -143,6 +145,17 @@ export function EditorScreen({ token, userId, onExit }: Props) {
       <View style={[styles.header, { borderColor: palette.border }]}>
         <Text style={[styles.title, { color: palette.text }]}>Editar tablero</Text>
         <View style={styles.headerActions}>
+          {onOpenAccessibility && (
+            <Pressable
+              testID="button-open-accessibility"
+              accessibilityRole="button"
+              accessibilityLabel="Accesibilidad"
+              onPress={onOpenAccessibility}
+              style={[styles.secondary, { borderColor: palette.border }]}
+            >
+              <Text style={{ color: palette.text }}>Accesibilidad</Text>
+            </Pressable>
+          )}
           {draft.hasChanges && (
             <Text testID="unsaved-badge" style={[styles.badge, { color: palette.danger }]}>
               Cambios sin guardar

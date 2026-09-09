@@ -1,5 +1,6 @@
-import { Controller, Get, Param, ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, UseGuards } from '@nestjs/common';
 import { AccessibilityService } from './accessibility.service';
+import { UpdateAccessibilityDto } from './dto/update-accessibility.dto';
 import { AccessibilitySettings } from './entities/accessibility-settings.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentCaregiver } from '../auth/decorators/current-caregiver.decorator';
@@ -24,5 +25,15 @@ export class AccessibilityController {
   ): Promise<AccessibilitySettings> {
     await this.ownership.assertOwned(userId, caregiver.id);
     return this.accessibilityService.findOrCreateForUser(userId);
+  }
+
+  @Patch()
+  async update(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() changes: UpdateAccessibilityDto,
+    @CurrentCaregiver() caregiver: Caregiver,
+  ): Promise<AccessibilitySettings> {
+    await this.ownership.assertOwned(userId, caregiver.id);
+    return this.accessibilityService.updateForUser(userId, changes);
   }
 }

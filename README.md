@@ -15,7 +15,7 @@ Proyecto de tesis. El plan completo por módulos está en [Doc.txt](Doc.txt).
 | 2      | Autenticación y perfiles               | JWT, PIN y aislamiento listos          |
 | 3      | Tablero principal (comunicador)        | App Expo con grilla, frase y TTS       |
 | 4      | Editor de pictogramas (modo terapeuta) | CRUD, uploads, ARASAAC y editor listos |
-| 5      | Accesibilidad configurable             | Campos en la base; lógica pendiente    |
+| 5      | Accesibilidad configurable             | Filtro anti-temblor, grilla, voz y paleta |
 | 6      | Historial y reportes                   | Entidad lista; agregaciones pendientes |
 | 7      | Offline y sincronización               | Pendiente                              |
 | 8      | Validación con usuarios reales         | Pendiente                              |
@@ -140,6 +140,19 @@ tablero → perfil.
 | POST   | `/api/uploads/audio`                      | Sube un audio (máx. 2 MB)          |
 | GET    | `/api/arasaac/search?q=`                  | Busca en el banco ARASAAC          |
 
+Accesibilidad (Módulo 5). La lectura ya existía desde el Módulo 3; acá se suma
+la edición.
+
+| Método | Ruta                               | Qué hace                            |
+| ------ | ---------------------------------- | ----------------------------------- |
+| PATCH  | `/api/users/:userId/accessibility` | Edita la configuración del perfil   |
+
+El PATCH es parcial y crea la fila si todavía no existía: el terapeuta puede
+entrar a los ajustes sin haber abierto nunca el comunicador, y ahí no habría
+nada que actualizar. Los rangos que valida el DTO salen de las constantes de
+`@vozaac/shared`, las mismas con las que la app dibuja los controles, así que
+la app y la API no pueden discrepar sobre qué valor es válido.
+
 Los archivos subidos se guardan en `UPLOAD_DIR` y se sirven bajo `/uploads`.
 El nombre lo genera el servidor y nunca se usa el que manda el cliente: un
 nombre como `../../.env` escaparía del directorio de subidas. Los pictogramas
@@ -186,6 +199,16 @@ Los del Módulo 4 verifican las validaciones de subida (formato y tamaño, más
 que un nombre de archivo no pueda escapar del directorio) y el aislamiento del
 borrador del editor: que agregar, editar o borrar no escriban nada hasta
 "Guardar cambios".
+
+Los del Módulo 5 son los que pide el Doc para el filtro anti-temblor: simulan
+toques rápidos contra toques sostenidos y verifican que sólo los segundos
+lleguen a la frase. Usan los fake timers de Jest, así que corren en
+milisegundos y no dependen de la carga de la máquina —conviene para mostrarlos
+en vivo en la defensa:
+
+```bash
+npm run test --workspace @vozaac/mobile -- tremor-filter
+```
 
 Los tests unitarios mockean los repositorios y verifican reglas de negocio. Los
 de integración corren contra SQLite en memoria, así que no necesitan Docker:

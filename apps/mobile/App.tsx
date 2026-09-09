@@ -7,11 +7,12 @@ import { ProfilePickerScreen } from './src/screens/ProfilePickerScreen';
 import { CommunicatorScreen } from './src/screens/CommunicatorScreen';
 import { PinGateScreen } from './src/screens/PinGateScreen';
 import { EditorScreen } from './src/screens/EditorScreen';
+import { AccessibilityScreen } from './src/screens/AccessibilityScreen';
 import { session } from './src/state/session';
 import { paletteFor } from './src/theme';
 
 /** Dónde está parada la app dentro del perfil elegido. */
-type Mode = 'communicator' | 'pin' | 'editor';
+type Mode = 'communicator' | 'pin' | 'editor' | 'accessibility';
 
 /**
  * Navegación de la app.
@@ -82,6 +83,18 @@ export default function App() {
           // Al salir se vuelve al comunicador, no al selector: el editor es una
           // parada dentro de la sesión del mismo perfil.
           onExit={() => setMode('communicator')}
+          onOpenAccessibility={() => setMode('accessibility')}
+        />
+      );
+    }
+    if (mode === 'accessibility') {
+      return (
+        <AccessibilityScreen
+          token={token}
+          userId={profile.id}
+          // Vuelve al editor y no al comunicador: se entra desde ahí, y el PIN
+          // ya se validó una sola vez para todo el modo terapeuta.
+          onExit={() => setMode('editor')}
         />
       );
     }

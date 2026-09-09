@@ -5,6 +5,7 @@ import { api } from '../api/client';
 import { usePhrase } from '../state/usePhrase';
 import { useSpeech } from '../state/useSpeech';
 import { useUsageQueue } from '../state/useUsageQueue';
+import { tremorOptionsFrom } from '../state/useTremorFilter';
 import { PhraseBar } from '../components/PhraseBar';
 import { CategoryTabs } from '../components/CategoryTabs';
 import { PictogramGrid } from '../components/PictogramGrid';
@@ -30,6 +31,7 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
   const { speak } = useSpeech(settings);
   const usage = useUsageQueue(token, userId);
   const palette = paletteFor(settings?.colorMode);
+  const tremor = useMemo(() => tremorOptionsFrom(settings), [settings]);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +127,7 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
         color={categoryColor(selectedCategory?.color ?? palette.accent, settings.colorMode)}
         palette={palette}
         onSelect={handleSelect}
+        tremor={tremor}
       />
 
       <View style={[styles.footer, { borderColor: palette.border }]}>

@@ -99,6 +99,30 @@ export const api = {
   accessibility: (token: string, userId: string) =>
     request<AccessibilitySettings>(`/users/${userId}/accessibility`, token),
 
+  /** Guarda cambios parciales de accesibilidad (Módulo 5). */
+  updateAccessibility: (
+    token: string,
+    userId: string,
+    changes: Partial<
+      Pick<
+        AccessibilitySettings,
+        | 'gridSize'
+        | 'colorMode'
+        | 'tremorFilterEnabled'
+        | 'holdToConfirmMs'
+        | 'debounceMs'
+        | 'moveTolerancePx'
+        | 'speechRate'
+        | 'speechPitch'
+        | 'voiceId'
+      >
+    >,
+  ) =>
+    request<AccessibilitySettings>(`/users/${userId}/accessibility`, token, {
+      method: 'PATCH',
+      body: JSON.stringify(changes),
+    }),
+
   verifyPin: (token: string, pin: string) =>
     request<{ valid: boolean }>('/auth/pin/verify', token, {
       method: 'POST',
