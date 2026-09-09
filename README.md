@@ -98,10 +98,20 @@ Se probó primero en tablet, pero no la requiere: en un celular las grillas 2x2
 y 2x3 —las pensadas para quien más dificultad motriz tiene— quedan cómodas, y
 que funcione en el dispositivo que la familia ya tiene importa para el piloto.
 
-Ojo con un detalle: desde un dispositivo real `localhost` es el
-propio teléfono, así que hay que apuntar `expo.extra.apiUrl` de
-[apps/mobile/app.json](apps/mobile/app.json) a la IP de la máquina en la red
-local (por ejemplo `http://192.168.0.10:3010/api`).
+La app encuentra sola la API: deriva la IP de la máquina que le está sirviendo
+el bundle, que es la misma que corre el backend. No hay que configurar nada
+mientras el celular y la computadora estén en la misma red WiFi.
+
+Eso importa porque desde un dispositivo real `localhost` es el propio teléfono
+y no la computadora, y esa IP además cambia cada vez que el router renueva el
+DHCP. Para apuntar a otro lado —un backend desplegado, o un túnel— se pone la
+URL en `expo.extra.apiUrl` de [apps/mobile/app.json](apps/mobile/app.json), que
+tiene prioridad sobre la detección automática.
+
+Si el celular no llega a la API, en orden: que ambos estén en el mismo WiFi (y
+que no sea una red que aísle a los clientes entre sí, como suele pasar en las
+de invitados); que el firewall de Windows deje entrar al puerto 3010 en el
+perfil de red privada; y recién ahí, un túnel.
 
 ## Endpoints
 

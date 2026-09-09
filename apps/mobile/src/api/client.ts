@@ -31,14 +31,49 @@ export interface NewPictogram {
   order?: number;
 }
 
+/** Puerto de la API en desarrollo; el mismo API_PORT del .env. */
+const API_PORT = 3010;
+
+/**
+ * IP de la máquina que está sirviendo el bundle de Expo.
+ *
+ * Es la misma que corre la API mientras se desarrolla, y Expo ya la conoce
+ * —se la pasa al dispositivo para servirle el JavaScript—, así que se puede
+ * derivar en vez de escribirla a mano. Importa porque esa IP cambia cada vez
+ * que el router renueva el DHCP, y tener que editar app.json en cada cambio
+ * es la clase de fricción que termina en "no me anda" sin saber por qué.
+ *
+ * Devuelve null en build de producción, donde no hay servidor de Expo.
+ */
+function expoHostIp(): string | null {
+  // hostUri viene como "192.168.1.7:8081"; según la versión de Expo aparece en
+  // uno u otro lugar, así que se prueban los dos.
+  const hostUri =
+    Constants.expoConfig?.hostUri ??
+    (Constants.expoGoConfig as { debuggerHost?: string } | undefined)?.debuggerHost;
+
+  const host = hostUri?.split(':')[0];
+  return host && host !== 'localhost' && host !== '127.0.0.1' ? host : null;
+}
+
 /**
  * URL de la API.
  *
- * Sale de app.json para poder apuntarla a la IP de la máquina cuando se prueba
- * desde un celular real: ahí `localhost` es el propio teléfono y no la compu.
+ * El orden importa: si `extra.apiUrl` está puesto en app.json gana siempre,
+ * porque es la forma de apuntar a un backend desplegado o a un túnel. Si no,
+ * se deriva de la IP de Expo, que es lo que sirve al probar desde un celular
+ * en la misma red. `localhost` queda sólo como último recurso: desde un
+ * dispositivo real es el propio teléfono y no la computadora.
  */
-export const API_URL =
-  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? 'http://localhost:3010/api';
+function resolveApiUrl(): string {
+  const configured = Constants.expoConfig?.extra?.apiUrl as string | undefined;
+  if (configured) return configured;
+
+  const host = expoHostIp();
+  return host ? `http://${host}:${API_PORT}/api` : `http://localhost:${API_PORT}/api`;
+}
+
+export const API_URL = resolveApiUrl();
 
 /** Error con el status HTTP, para que las pantallas distingan 401 de una caída de red. */
 export class ApiError extends Error {
