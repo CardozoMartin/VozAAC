@@ -1,4 +1,11 @@
-import type { CaregiverRole, ColorMode, GridSize, PictogramSource, UsageEventType } from './enums';
+import type {
+  CaregiverRole,
+  ColorMode,
+  DeviceKind,
+  GridSize,
+  PictogramSource,
+  UsageEventType,
+} from './enums';
 
 /** Forma en que las entidades viajan por la API (sin campos internos ni hashes). */
 
@@ -100,6 +107,47 @@ export interface VocabularyGrowthPoint {
 export interface AuthResponse {
   accessToken: string;
   caregiver: Caregiver;
+}
+
+/**
+ * Respuesta al canjear un código de vinculación (Módulo 9).
+ *
+ * Trae el refresh token además del de acceso: este dispositivo tiene que poder
+ * renovar su sesión solo, sin que nadie vuelva a escribir una contraseña.
+ */
+export interface DeviceAuthResponse extends AuthResponse {
+  refreshToken: string;
+  device: LinkedDevice;
+  /** Perfil al que quedó atado el dispositivo, si se vinculó a uno. */
+  profile: UserProfile | null;
+}
+
+/** Par de tokens que devuelve /auth/refresh. */
+export interface RefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+/** Código de vinculación recién generado, tal como se le muestra al adulto. */
+export interface LinkCodeResponse {
+  code: string;
+  kind: DeviceKind;
+  expiresAt: string;
+  /** Perfil al que va a quedar atado el dispositivo; null para un responsable. */
+  userId: string | null;
+}
+
+/**
+ * Dispositivo vinculado, como aparece en la lista desde la que el cuidador
+ * revoca accesos (Módulo 9).
+ */
+export interface LinkedDevice {
+  id: string;
+  name: string;
+  kind: DeviceKind;
+  userId: string | null;
+  lastSeenAt: string | null;
+  createdAt: string;
 }
 
 /** Contenido del JWT. `sub` es el id del cuidador, por convención de JWT. */

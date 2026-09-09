@@ -19,7 +19,7 @@ Proyecto de tesis. El plan completo por módulos está en [Doc.txt](Doc.txt).
 | 6      | Historial y reportes                   | Entidad lista; agregaciones pendientes |
 | 7      | Offline y sincronización               | Pendiente                              |
 | 8      | Validación con usuarios reales         | Pendiente                              |
-| 9      | Vinculación y alertas al responsable   | Planificado — aporte fuera del Doc     |
+| 9      | Vinculación y alertas al responsable   | Vinculación lista; alertas pendientes  |
 
 El plan del Módulo 9 y lo que sigue está en
 [docs/proximos-pasos.md](docs/proximos-pasos.md).
@@ -208,6 +208,41 @@ tablero → perfil.
 | POST   | `/api/uploads/audio`                      | Sube un audio (máx. 2 MB)          |
 | GET    | `/api/arasaac/search?q=`                  | Busca en el banco ARASAAC          |
 
+Vinculación de dispositivos (Módulo 9). Es el aporte que va más allá del plan
+del Doc: el padre configura el panel desde su celular y después enrola los
+otros dispositivos —el del chico/a, el de otro responsable— con un código.
+
+| Método | Ruta                       | Qué hace                                  |
+| ------ | -------------------------- | ----------------------------------------- |
+| POST   | `/api/devices/link-codes`  | Genera el código para enrolar otro equipo |
+| POST   | `/api/devices/redeem`      | Canjea el código y abre la sesión         |
+| POST   | `/api/devices/refresh`     | Renueva la sesión de un dispositivo       |
+| GET    | `/api/devices`             | Dispositivos vinculados del cuidador      |
+| DELETE | `/api/devices/:id`         | Revoca el acceso de un dispositivo        |
+
+`redeem` y `refresh` son los dos únicos endpoints sin `Authorization`: quien
+los llama todavía no tiene JWT, y su credencial es el código en un caso y el
+refresh token en el otro.
+
+El código se usa **una sola vez**, al enrolar, y no vuelve a aparecer nunca. Es
+el patrón de Netflix o Spotify Connect, y no hay que confundirlo con el PIN del
+modo terapeuta, que sí es una barrera de todos los días. Vive quince minutos, se
+quema a los cinco intentos fallidos y usa un alfabeto sin caracteres que se
+confundan al dictarlo por teléfono: sin O/0, sin I/1/L.
+
+Esto existe porque el JWT de siete días no sirve en el celular del chico/a: una
+vez por semana lo dejaría en la pantalla de login, y él no puede resolver eso.
+Un dispositivo vinculado guarda además un refresh token, la app renueva la
+sesión sola antes de que nadie lo note, y esa sesión no vence por tiempo:
+termina sólo cuando un adulto la revoca desde su celular.
+
+Del refresh token se guarda el hash, nunca el token, igual que con las
+contraseñas. Es SHA-256 y no bcrypt: son 32 bytes aleatorios, no hay
+diccionario que los adivine, así que el coste alto de bcrypt no compraría nada
+y además impediría buscar la sesión por índice. El token se rota en cada
+renovación, así que uno filtrado deja de servir apenas el dispositivo vuelve a
+renovar.
+
 Accesibilidad (Módulo 5). La lectura ya existía desde el Módulo 3; acá se suma
 la edición.
 
@@ -277,6 +312,15 @@ en vivo en la defensa:
 ```bash
 npm run test --workspace @vozaac/mobile -- tremor-filter
 ```
+
+Los del Módulo 9 recorren el circuito entero de vinculación: generar el código,
+canjearlo, renovar la sesión y revocarla. El que más importa es el último —que
+revocar corte de verdad la renovación—, porque es lo único que cierra el acceso
+de un dispositivo perdido cuya sesión no vence por tiempo. Del lado de la app
+se verifica que un 401 dispare la renovación y el reintento sin que el chico/a
+vea nada, y que dos llamadas simultáneas compartan una sola renovación: como el
+backend rota el token en cada uso, dos renovaciones a la vez cerrarían la
+sesión sin motivo.
 
 Los tests unitarios mockean los repositorios y verifican reglas de negocio. Los
 de integración corren contra SQLite en memoria, así que no necesitan Docker:

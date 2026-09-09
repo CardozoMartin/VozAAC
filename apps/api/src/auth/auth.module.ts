@@ -22,6 +22,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [AuthService],
+  // JwtModule se exporta para que DevicesModule firme el access token de un
+  // dispositivo vinculado con el mismo secreto que el login (Módulo 9).
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

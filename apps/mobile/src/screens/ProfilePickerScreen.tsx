@@ -51,7 +51,9 @@ export function ProfilePickerScreen({ token, onSelect, onLogout }: Props) {
     setCreateError(null);
     try {
       const created = await api.createProfile(token, { name });
-      setProfiles((current) => [...(current ?? []), created].sort((a, b) => a.name.localeCompare(b.name)));
+      setProfiles((current) =>
+        [...(current ?? []), created].sort((a, b) => a.name.localeCompare(b.name)),
+      );
       setNewName('');
       setAdding(false);
     } catch (err) {
@@ -250,7 +252,12 @@ const styles = StyleSheet.create({
   photoPlaceholder: { borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   initial: { fontSize: 44, fontWeight: '700' },
   name: { fontSize: 20, fontWeight: '700', textAlign: 'center' },
-  footer: { flexDirection: 'row', justifyContent: 'center', gap: spacing.md, marginTop: spacing.lg },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
   addButton: { borderRadius: 12, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
   addButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   backdrop: {

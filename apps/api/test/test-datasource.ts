@@ -6,6 +6,8 @@ import { Category } from '../src/categories/entities/category.entity';
 import { Pictogram } from '../src/pictograms/entities/pictogram.entity';
 import { AccessibilitySettings } from '../src/accessibility/entities/accessibility-settings.entity';
 import { UsageLog } from '../src/usage/entities/usage-log.entity';
+import { DeviceSession } from '../src/devices/entities/device-session.entity';
+import { LinkCode } from '../src/devices/entities/link-code.entity';
 
 export const TEST_ENTITIES = [
   Caregiver,
@@ -15,6 +17,8 @@ export const TEST_ENTITIES = [
   Pictogram,
   AccessibilitySettings,
   UsageLog,
+  DeviceSession,
+  LinkCode,
 ];
 
 /**

@@ -16,10 +16,13 @@ para que una familia pudiera usar el proyecto sin tocar la base a mano.
 | `dfed24a` | La app encuentra sola la IP de la API             |
 | `6ee3efb` | Registro y alta de perfiles desde la app          |
 
-247 tests en verde: 69 unitarios de la API, 85 e2e, 10 de integración y 83 de
+Del Módulo 9 está hecho el paso 2: vinculación por código y sesión que no
+expira.
+
+309 tests en verde: 89 unitarios de la API, 109 e2e, 10 de integración y 101 de
 la app.
 
-Falta mergear a `main`: los Módulos 3, 4 y 5 viven en esta rama.
+Falta mergear a `main`: los Módulos 3, 4, 5 y 9 viven en esta rama.
 
 ## Módulo 9 — Vinculación de dispositivos y alertas
 
@@ -39,23 +42,45 @@ salida al editor.
 ### Orden de trabajo
 
 1. ~~Registro, alta de perfiles y restaurar la sesión~~ — hecho en `6ee3efb`
-2. **Vinculación por código + sesión que no expira**
+2. ~~Vinculación por código + sesión que no expira~~ — hecho
 3. **Varios responsables por chico/a** — tabla intermedia cuidador–perfil
 4. **Pictogramas urgentes + alertas** — primero sin push, después con push
 
-### Tres bloqueantes técnicos
+### Cómo quedó la vinculación
 
-**El token dura 7 días** (`JWT_EXPIRES_IN=7d`). En el celular del chico/a eso
-significa que una vez por semana la app lo saca al login, y él no puede
-resolverlo. Un dispositivo vinculado necesita refresh token: sesión que se
-renueva sola y sólo termina si alguien la revoca a propósito.
+El cuidador genera un código de 6 caracteres desde su celular
+(`POST /api/devices/link-codes`), lo dicta, y en el otro dispositivo se canjea
+(`POST /api/devices/redeem`). Ese canje deja una `DeviceSession` con un refresh
+token que no vence por tiempo: la app renueva sola con
+`POST /api/devices/refresh`, y la sesión termina sólo cuando alguien la revoca
+desde la pantalla de dispositivos.
+
+Dos detalles que valen para la defensa: el código usa un alfabeto sin O/0 ni
+I/1/L porque se dicta en voz alta, y del refresh token se guarda el hash
+—SHA-256, no bcrypt: son 32 bytes aleatorios, no hay diccionario que los
+adivine, y el hash tiene que ser determinístico para buscar la sesión por
+índice—.
+
+En el dispositivo de un chico/a la app además esconde la salida al selector de
+perfiles: su perfil quedó fijado al vincularlo, y una puerta que él no sabe
+deshacer sólo lo dejaría afuera de su comunicador.
+
+### Los dos bloqueantes que quedan
+
+~~**El token dura 7 días.**~~ Resuelto: un dispositivo vinculado renueva su
+sesión solo y ya no vuelve nunca al login.
 
 **Un perfil tiene un solo cuidador.** La relación es uno-a-muchos, así que hoy
 el modelo no soporta que la madre y el padre vean al mismo chico/a. Hace falta
 una tabla intermedia, y conviene migrarlo antes del piloto: hacerlo con datos
 reales de familias encima es bastante peor.
 
-**`Pictogram` no tiene campo de urgencia.** Es el más fácil de los tres.
+Hoy el dispositivo de un segundo responsable se vincula colgado de la cuenta
+del primero, así que ve los mismos perfiles pero no tiene cuenta propia. Para
+el piloto alcanza; para que cada responsable tenga su usuario, hace falta la
+tabla intermedia.
+
+**`Pictogram` no tiene campo de urgencia.** Es el más fácil de los dos.
 
 ### Cómo llegan las alertas
 

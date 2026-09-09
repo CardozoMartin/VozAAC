@@ -131,6 +131,52 @@ La alternativa era declarar todo como `varchar`, pero eso le sacaría a
 PostgreSQL la validación del enum a nivel base — justamente lo que queremos
 conservar donde importa.
 
+## Entidades del Módulo 9
+
+La vinculación de dispositivos suma dos entidades que cuelgan de `Caregiver` y,
+opcionalmente, de `User`. No forman parte del modelo del Doc: son del aporte
+propio del Módulo 9.
+
+```
+Caregiver
+    │ 1..N ──────────────► DeviceSession ──► 0..1 User
+    │ 1..N ──────────────► LinkCode      ──► 0..1 User
+```
+
+### DeviceSession
+
+La sesión permanente de un dispositivo enrolado. Existe porque el JWT de siete
+días no sirve en el celular del chico/a: una vez por semana lo dejaría en el
+login, y él no puede resolverlo.
+
+De `refreshTokenHash` se guarda el hash y nunca el token, igual que con las
+contraseñas. Es SHA-256 y no bcrypt, a diferencia del `passwordHash` del
+cuidador: un refresh token son 32 bytes aleatorios, así que no hay diccionario
+que lo adivine y el coste alto de bcrypt no compraría nada; además el hash
+tiene que ser determinístico para buscar la sesión por índice, y con bcrypt
+habría que recorrer la tabla entera.
+
+`userId` es nulo en el dispositivo de un responsable, que elige perfil como
+siempre, y apunta al perfil en el del chico/a, que abre directo en su tablero.
+
+`revokedAt` marca la revocación en vez de borrar la fila: al cuidador le sirve
+saber que ese acceso existió y cuándo terminó. `lastSeenAt` le permite
+distinguir el dispositivo en uso del que perdió hace meses.
+
+### LinkCode
+
+El código de un solo uso con el que se enrola un dispositivo. A diferencia del
+refresh token, acá el código se guarda en claro: vive quince minutos, sirve una
+sola vez, y hay que poder mostrárselo al cuidador mientras está vigente por si
+cerró la pantalla. Un hash impediría eso sin comprar seguridad real para una
+ventana tan corta.
+
+`failedAttempts` quema el código a los cinco intentos: seis caracteres sin
+límite de intentos se rompen a fuerza bruta, con límite no. Se cuenta sólo
+contra códigos que existen — sumarle intentos a códigos inventados no protege
+nada y permitiría que un tercero quemara el código de otro tipeando cualquier
+cosa.
+
 ## Qué está verificado por tests
 
 Los tests de integración en

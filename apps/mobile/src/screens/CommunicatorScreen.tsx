@@ -16,7 +16,12 @@ interface Props {
   token: string;
   userId: string;
   profileName: string;
-  onExit: () => void;
+  /**
+   * Vuelve al selector de perfiles. Ausente en el dispositivo de un chico/a
+   * (Módulo 9): su perfil quedó fijado al vincularlo, y una salida que él no
+   * sabe deshacer sólo lo dejaría afuera de su comunicador.
+   */
+  onExit?: () => void;
   /** Abre el modo terapeuta, previo PIN. Ausente si el cuidador no configuró uno. */
   onOpenEditor?: () => void;
 }
@@ -90,9 +95,11 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
     return (
       <View style={[styles.centered, { backgroundColor: palette.background }]}>
         <Text style={[styles.errorText, { color: palette.danger }]}>{error}</Text>
-        <Pressable onPress={onExit} style={[styles.exitButton, { borderColor: palette.border }]}>
-          <Text style={{ color: palette.text }}>Volver</Text>
-        </Pressable>
+        {onExit && (
+          <Pressable onPress={onExit} style={[styles.exitButton, { borderColor: palette.border }]}>
+            <Text style={{ color: palette.text }}>Volver</Text>
+          </Pressable>
+        )}
       </View>
     );
   }
@@ -133,10 +140,7 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
       />
 
       <View style={[styles.footer, { borderColor: palette.border }]}>
-        <Text
-          style={[styles.profileName, { color: palette.textMuted }]}
-          numberOfLines={1}
-        >
+        <Text style={[styles.profileName, { color: palette.textMuted }]} numberOfLines={1}>
           {profileName}
         </Text>
         <View style={styles.footerActions}>
@@ -155,17 +159,19 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
               </Text>
             </Pressable>
           )}
-          <Pressable
-            testID="button-exit"
-            accessibilityRole="button"
-            accessibilityLabel="Cambiar de perfil"
-            onPress={onExit}
-            style={[styles.exitButton, { borderColor: palette.border }]}
-          >
-            <Text style={{ color: palette.textMuted }}>
-              {isCompact ? 'Perfil' : 'Cambiar perfil'}
-            </Text>
-          </Pressable>
+          {onExit && (
+            <Pressable
+              testID="button-exit"
+              accessibilityRole="button"
+              accessibilityLabel="Cambiar de perfil"
+              onPress={onExit}
+              style={[styles.exitButton, { borderColor: palette.border }]}
+            >
+              <Text style={{ color: palette.textMuted }}>
+                {isCompact ? 'Perfil' : 'Cambiar perfil'}
+              </Text>
+            </Pressable>
+          )}
         </View>
       </View>
     </View>

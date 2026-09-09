@@ -23,6 +23,8 @@ interface Props {
   onExit: () => void;
   /** Abre los ajustes de accesibilidad (Módulo 5), dentro del modo terapeuta. */
   onOpenAccessibility?: () => void;
+  /** Abre la lista de dispositivos vinculados (Módulo 9). */
+  onOpenDevices?: () => void;
 }
 
 /**
@@ -32,7 +34,7 @@ interface Props {
  * editar con el chico/a al lado, y que los pictogramas cambien bajo su dedo
  * mientras tanto sería confuso para quien está comunicándose.
  */
-export function EditorScreen({ token, userId, onExit, onOpenAccessibility }: Props) {
+export function EditorScreen({ token, userId, onExit, onOpenAccessibility, onOpenDevices }: Props) {
   const [board, setBoard] = useState<Board | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -154,6 +156,17 @@ export function EditorScreen({ token, userId, onExit, onOpenAccessibility }: Pro
               style={[styles.secondary, { borderColor: palette.border }]}
             >
               <Text style={{ color: palette.text }}>Accesibilidad</Text>
+            </Pressable>
+          )}
+          {onOpenDevices && (
+            <Pressable
+              testID="button-open-devices"
+              accessibilityRole="button"
+              accessibilityLabel="Dispositivos"
+              onPress={onOpenDevices}
+              style={[styles.secondary, { borderColor: palette.border }]}
+            >
+              <Text style={{ color: palette.text }}>Dispositivos</Text>
             </Pressable>
           )}
           {draft.hasChanges && (

@@ -37,7 +37,7 @@ describe('LoginScreen', () => {
   it('entra con email y contraseña', async () => {
     mockedApi.login.mockResolvedValue({ accessToken: 'tok' } as never);
     const onLoggedIn = jest.fn();
-    render(<LoginScreen onLoggedIn={onLoggedIn} />);
+    render(<LoginScreen onLoggedIn={onLoggedIn} onLinkDevice={jest.fn()} />);
 
     fireEvent.changeText(screen.getByTestId('input-email'), 'ana@ejemplo.com');
     fireEvent.changeText(screen.getByTestId('input-password'), 'contrasena-valida');
@@ -50,7 +50,7 @@ describe('LoginScreen', () => {
   });
 
   it('no pide el nombre para entrar, sólo para registrarse', () => {
-    render(<LoginScreen onLoggedIn={jest.fn()} />);
+    render(<LoginScreen onLoggedIn={jest.fn()} onLinkDevice={jest.fn()} />);
 
     expect(screen.queryByTestId('input-fullname')).toBeNull();
 
@@ -62,7 +62,7 @@ describe('LoginScreen', () => {
   it('registra al adulto responsable y lo deja adentro', async () => {
     mockedApi.register.mockResolvedValue({ accessToken: 'tok-nuevo' } as never);
     const onLoggedIn = jest.fn();
-    render(<LoginScreen onLoggedIn={onLoggedIn} />);
+    render(<LoginScreen onLoggedIn={onLoggedIn} onLinkDevice={jest.fn()} />);
 
     fireEvent.press(screen.getByTestId('button-toggle-mode'));
     fireEvent.changeText(screen.getByTestId('input-fullname'), 'Ana Pérez');
@@ -83,7 +83,7 @@ describe('LoginScreen', () => {
   });
 
   it('no deja registrarse con una contraseña que la API va a rechazar', () => {
-    render(<LoginScreen onLoggedIn={jest.fn()} />);
+    render(<LoginScreen onLoggedIn={jest.fn()} onLinkDevice={jest.fn()} />);
 
     fireEvent.press(screen.getByTestId('button-toggle-mode'));
     fireEvent.changeText(screen.getByTestId('input-fullname'), 'Ana');
@@ -97,7 +97,7 @@ describe('LoginScreen', () => {
 
   it('muestra el error del servidor', async () => {
     mockedApi.login.mockRejectedValue(new Error('Email o contraseña incorrectos'));
-    render(<LoginScreen onLoggedIn={jest.fn()} />);
+    render(<LoginScreen onLoggedIn={jest.fn()} onLinkDevice={jest.fn()} />);
 
     fireEvent.changeText(screen.getByTestId('input-email'), 'ana@ejemplo.com');
     fireEvent.changeText(screen.getByTestId('input-password'), 'mala');
@@ -108,7 +108,7 @@ describe('LoginScreen', () => {
 
   it('limpia el error al cambiar de modo', async () => {
     mockedApi.login.mockRejectedValue(new Error('Email o contraseña incorrectos'));
-    render(<LoginScreen onLoggedIn={jest.fn()} />);
+    render(<LoginScreen onLoggedIn={jest.fn()} onLinkDevice={jest.fn()} />);
 
     fireEvent.changeText(screen.getByTestId('input-email'), 'ana@ejemplo.com');
     fireEvent.changeText(screen.getByTestId('input-password'), 'mala');

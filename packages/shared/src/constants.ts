@@ -52,3 +52,32 @@ export const THERAPIST_PIN = {
 
 /** Largo mínimo de la contraseña del cuidador (Módulo 2). */
 export const PASSWORD_MIN_LENGTH = 8;
+
+/**
+ * Vinculación de dispositivos (Módulo 9).
+ *
+ * El código lo dicta un adulto y lo tipea otro en un teléfono, muchas veces
+ * por teléfono o por mensaje. Por eso es corto y de un alfabeto sin caracteres
+ * que se confundan al leerlos en voz alta: sin O/0, sin I/1/L.
+ */
+export const LINK_CODE = {
+  length: 6,
+  alphabet: 'ABCDEFGHJKMNPQRSTUVWXYZ23456789',
+  /**
+   * Minutos que vive el código. Corto a propósito: se genera y se canjea en el
+   * momento, con los dos dispositivos sobre la mesa. Si vence, se pide otro.
+   */
+  expiresInMinutes: 15,
+  /**
+   * Intentos fallidos antes de invalidar el código. Con 31^6 combinaciones el
+   * riesgo real de adivinarlo es bajo, pero un código de 6 caracteres sin
+   * límite de intentos es igualmente algo que no queremos dejar abierto.
+   */
+  maxAttempts: 5,
+} as const;
+
+/**
+ * Nombre con el que se muestra un dispositivo vinculado que no informó el suyo.
+ * El padre necesita reconocerlo en la lista para poder revocarlo.
+ */
+export const DEFAULT_DEVICE_NAME = 'Dispositivo sin nombre';

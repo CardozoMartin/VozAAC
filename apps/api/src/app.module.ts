@@ -14,6 +14,7 @@ import { AccessibilityModule } from './accessibility/accessibility.module';
 import { UsageModule } from './usage/usage.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { ArasaacModule } from './arasaac/arasaac.module';
+import { DevicesModule } from './devices/devices.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ArasaacModule } from './arasaac/arasaac.module';
     UsageModule,
     UploadsModule,
     ArasaacModule,
+    DevicesModule,
   ],
 })
 export class AppModule {}

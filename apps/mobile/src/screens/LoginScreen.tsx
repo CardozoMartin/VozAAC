@@ -15,6 +15,8 @@ import { paletteFor, spacing } from '../theme';
 
 interface Props {
   onLoggedIn: (token: string) => void;
+  /** Abre el canje de código, para enrolar este dispositivo (Módulo 9). */
+  onLinkDevice: () => void;
 }
 
 /** Largo mínimo de contraseña que acepta la API. */
@@ -32,7 +34,7 @@ const MIN_PASSWORD = 8;
  * pedirle una contraseña sería ponerle una barrera de texto delante de su
  * propia voz. Entra tocando su foto en el selector de perfiles.
  */
-export function LoginScreen({ onLoggedIn }: Props) {
+export function LoginScreen({ onLoggedIn, onLinkDevice }: Props) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -168,6 +170,23 @@ export function LoginScreen({ onLoggedIn }: Props) {
           >
             <Text style={[styles.linkText, { color: palette.accent }]}>
               {isRegistering ? 'Ya tengo cuenta' : 'Crear una cuenta nueva'}
+            </Text>
+          </Pressable>
+
+          {/*
+            Salida para el dispositivo del chico/a y el del otro responsable:
+            no tienen cuenta propia y nunca van a tenerla, así que entran con
+            el código que les dicta quien ya configuró la app.
+          */}
+          <Pressable
+            testID="button-open-link"
+            accessibilityRole="button"
+            accessibilityLabel="Tengo un código de vinculación"
+            onPress={onLinkDevice}
+            style={styles.link}
+          >
+            <Text style={[styles.linkText, { color: palette.textMuted }]}>
+              Tengo un código de vinculación
             </Text>
           </Pressable>
         </View>

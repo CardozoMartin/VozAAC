@@ -5,8 +5,13 @@ import type {
   AccessibilitySettings,
   ArasaacPictogram,
   Category,
+  DeviceAuthResponse,
+  DeviceKind,
+  LinkCodeResponse,
+  LinkedDevice,
   Pictogram,
   PictogramSource,
+  RefreshResponse,
   UserProfile,
   UsageEventType,
 } from '@vozaac/shared';
@@ -132,6 +137,37 @@ export const api = {
       body: JSON.stringify({ email, password, fullName }),
     }),
 
+  // --- Vinculación de dispositivos (Módulo 9) ---
+
+  /** Genera el código que el cuidador va a dictar en el otro dispositivo. */
+  createLinkCode: (token: string, input: { kind: DeviceKind; userId?: string }) =>
+    request<LinkCodeResponse>('/devices/link-codes', token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  /**
+   * Canjea el código en el dispositivo nuevo. Sin token: el código es la
+   * credencial de quien todavía no tiene sesión.
+   */
+  redeemLinkCode: (code: string, deviceName?: string) =>
+    request<DeviceAuthResponse>('/devices/redeem', null, {
+      method: 'POST',
+      body: JSON.stringify({ code, ...(deviceName ? { deviceName } : {}) }),
+    }),
+
+  /** Renueva la sesión de un dispositivo vinculado. */
+  refreshSession: (refreshToken: string) =>
+    request<RefreshResponse>('/devices/refresh', null, {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken }),
+    }),
+
+  linkedDevices: (token: string) => request<LinkedDevice[]>('/devices', token),
+
+  revokeDevice: (token: string, deviceId: string) =>
+    request<void>(`/devices/${deviceId}`, token, { method: 'DELETE' }),
+
   profiles: (token: string) => request<UserProfile[]>('/users', token),
 
   /** Crea el perfil de un chico/a, con su tablero y vocabulario inicial. */
@@ -144,10 +180,11 @@ export const api = {
     token: string,
     id: string,
     changes: { name?: string; birthDate?: string | null; photoUrl?: string | null },
-  ) => request<UserProfile>(`/users/${id}`, token, {
-    method: 'PATCH',
-    body: JSON.stringify(changes),
-  }),
+  ) =>
+    request<UserProfile>(`/users/${id}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify(changes),
+    }),
 
   deleteProfile: (token: string, id: string) =>
     request<void>(`/users/${id}`, token, { method: 'DELETE' }),
