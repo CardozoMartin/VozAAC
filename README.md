@@ -22,7 +22,9 @@ Proyecto de tesis. El plan completo por módulos está en [Doc.txt](Doc.txt).
 | 9      | Vinculación y alertas al responsable   | Completo — vinculación, responsables y alertas |
 
 El plan del Módulo 9 y lo que sigue está en
-[docs/proximos-pasos.md](docs/proximos-pasos.md).
+[docs/proximos-pasos.md](docs/proximos-pasos.md). El detalle de las diez
+pantallas, para pasarle a una herramienta de diseño, está en
+[docs/prompt-diseno-pantallas.md](docs/prompt-diseno-pantallas.md).
 
 ## Quién usa qué
 

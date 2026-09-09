@@ -150,6 +150,18 @@ Dos detalles que deciden si la función sobrevive al uso real:
 - **El chico/a tiene que ver que su mensaje salió**, con un "avisado ✓". Si no,
   no sabe si sirvió de algo y lo va a tocar diez veces.
 
+## Diseño de las pantallas
+
+Las diez pantallas están descriptas en
+[prompt-diseno-pantallas.md](prompt-diseno-pantallas.md), pensado para pasarle
+a una herramienta de diseño. Conviene pedirlas de a una o dos, y empezar por el
+comunicador: es la que define el sistema visual y las demás se acomodan a ella.
+
+Ese documento arrastra las restricciones que no se pueden negociar —áreas
+táctiles grandes, nada de gestos, sin animaciones decorativas— porque las
+herramientas de diseño optimizan por lo que se ve lindo en una captura y no por
+lo que funciona en la mano de un chico/a con dificultades motrices.
+
 ## Después
 
 - **Módulo 6** — historial y reportes. Las agregaciones usan funciones propias
