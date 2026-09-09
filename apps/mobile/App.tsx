@@ -9,6 +9,7 @@ import { PinGateScreen } from './src/screens/PinGateScreen';
 import { EditorScreen } from './src/screens/EditorScreen';
 import { AccessibilityScreen } from './src/screens/AccessibilityScreen';
 import { session } from './src/state/session';
+import { api } from './src/api/client';
 import { paletteFor } from './src/theme';
 
 /** Dónde está parada la app dentro del perfil elegido. */
@@ -28,12 +29,45 @@ export default function App() {
   const [restoring, setRestoring] = useState(true);
   const palette = paletteFor(undefined);
 
-  // Sesión guardada: que la familia no tenga que loguearse cada vez.
+  /**
+   * Sesión guardada: que la familia no tenga que loguearse cada vez.
+   *
+   * Se restaura también el perfil elegido, no sólo el token. Para un chico/a
+   * que usa siempre el mismo dispositivo, cada toque de más entre abrir la app
+   * y su tablero es un toque entre él y su voz. Si el perfil ya no existe
+   * —lo borraron desde otro dispositivo— se cae al selector, que es lo correcto
+   * y no un error.
+   */
   useEffect(() => {
-    session
-      .load()
-      .then(({ token: saved }) => setToken(saved))
-      .finally(() => setRestoring(false));
+    let cancelled = false;
+
+    async function restaurar() {
+      const { token: saved, profileId } = await session.load();
+      if (cancelled || !saved) {
+        if (!cancelled) setRestoring(false);
+        return;
+      }
+
+      setToken(saved);
+
+      if (profileId) {
+        try {
+          const perfiles = await api.profiles(saved);
+          const guardado = perfiles.find((perfil) => perfil.id === profileId);
+          if (!cancelled && guardado) setProfile(guardado);
+        } catch {
+          // Sin red o con la sesión vencida se muestra el selector, que ya
+          // sabe volver a pedir los perfiles y mostrar el error.
+        }
+      }
+
+      if (!cancelled) setRestoring(false);
+    }
+
+    void restaurar();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function handleLoggedIn(accessToken: string) {

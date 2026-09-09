@@ -126,7 +126,31 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
 
+  register: (email: string, password: string, fullName: string) =>
+    request<AuthResponse>('/auth/register', null, {
+      method: 'POST',
+      body: JSON.stringify({ email, password, fullName }),
+    }),
+
   profiles: (token: string) => request<UserProfile[]>('/users', token),
+
+  /** Crea el perfil de un chico/a, con su tablero y vocabulario inicial. */
+  createProfile: (
+    token: string,
+    input: { name: string; birthDate?: string | null; photoUrl?: string | null },
+  ) => request<UserProfile>('/users', token, { method: 'POST', body: JSON.stringify(input) }),
+
+  updateProfile: (
+    token: string,
+    id: string,
+    changes: { name?: string; birthDate?: string | null; photoUrl?: string | null },
+  ) => request<UserProfile>(`/users/${id}`, token, {
+    method: 'PATCH',
+    body: JSON.stringify(changes),
+  }),
+
+  deleteProfile: (token: string, id: string) =>
+    request<void>(`/users/${id}`, token, { method: 'DELETE' }),
 
   defaultBoard: (token: string, userId: string) =>
     request<Board>(`/users/${userId}/boards/default`, token),

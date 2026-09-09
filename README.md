@@ -20,6 +20,32 @@ Proyecto de tesis. El plan completo por módulos está en [Doc.txt](Doc.txt).
 | 7      | Offline y sincronización               | Pendiente                              |
 | 8      | Validación con usuarios reales         | Pendiente                              |
 
+## Quién usa qué
+
+Hay dos entidades y conviene no confundirlas. El **cuidador** (madre, padre,
+terapeuta) es quien tiene cuenta con email y contraseña. El **perfil** es el
+chico/a, y no tiene credenciales de ningún tipo.
+
+Eso no es un atajo: quien usa un comunicador AAC muchas veces no lee ni
+escribe, y pedirle una contraseña sería ponerle una barrera de texto delante de
+su propia voz. El adulto se autentica una vez, la sesión queda guardada en el
+dispositivo, y el chico/a entra tocando su foto en el selector.
+
+```
+El adulto, una vez            El chico/a, todos los días
+──────────────────            ──────────────────────────
+Se registra                   Abre la app
+Crea el perfil                Toca su foto
+Arma el vocabulario           Ya está en su tablero
+Define un PIN
+```
+
+Por eso el PIN del modo terapeuta protege la **salida** hacia el editor y no la
+entrada al comunicador: es para que el chico/a no desarme su propio vocabulario
+sin querer, no para dejarlo afuera. Un cuidador puede tener varios perfiles
+—una terapeuta con seis pacientes— y cada uno lleva su tablero, su vocabulario
+y su configuración de accesibilidad.
+
 ## Estructura
 
 ```
@@ -128,6 +154,22 @@ header `Authorization: Bearer <token>`.
 | POST   | `/api/auth/pin/verify` | Verifica el PIN                            |
 | GET    | `/api/users`           | Perfiles del cuidador (selector de perfil) |
 | GET    | `/api/users/:id`       | Un perfil, solo si es del cuidador         |
+| POST   | `/api/users`           | Crea el perfil de un chico/a               |
+| PATCH  | `/api/users/:id`       | Edita nombre, fecha o foto                 |
+| DELETE | `/api/users/:id`       | Borra el perfil y todo su contenido        |
+
+Un perfil nuevo no nace vacío: la creación deja además su configuración de
+accesibilidad, un tablero por defecto y un vocabulario inicial de 27
+pictogramas de ARASAAC en cinco categorías. Va todo en una transacción, porque
+un perfil a medio armar dejaría al chico/a frente a una pantalla rota y no hay
+forma de arreglarla desde la app. El vocabulario vive en
+[starter-vocabulary.ts](apps/api/src/boards/starter-vocabulary.ts) y lo comparte
+el seed, así que la demo muestra exactamente lo que ve una familia al crear el
+suyo.
+
+El `caregiverId` sale siempre del token y nunca del cuerpo: mandarlo en el body
+devuelve 400. Si viniera de ahí, alguien podría crear perfiles colgados de la
+cuenta de otra persona.
 
 Comunicador (Módulo 3). Todo cuelga de `/api/users/:userId/`, y en cada request
 se valida que el perfil sea del cuidador del token.

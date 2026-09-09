@@ -7,14 +7,14 @@ import { Board } from '../../boards/entities/board.entity';
 import { Category } from '../../categories/entities/category.entity';
 import { Pictogram } from '../../pictograms/entities/pictogram.entity';
 import { AccessibilitySettings } from '../../accessibility/entities/accessibility-settings.entity';
+import { STARTER_VOCABULARY } from '../../boards/starter-vocabulary';
 
 /**
  * Datos de ejemplo para desarrollo y para la demo de la defensa.
  *
- * El vocabulario inicial sigue las categorías habituales de un tablero AAC
- * básico. Los colores respetan la convención Fitzgerald Key, que los
- * terapeutas ya reconocen: verde para acciones, naranja para sustantivos,
- * azul para descriptores, rosa para expresiones sociales.
+ * El vocabulario sale de STARTER_VOCABULARY, el mismo con el que nace
+ * cualquier perfil nuevo: así la demo muestra exactamente lo que va a ver una
+ * familia al crear el suyo, y no una versión paralela que se desactualiza.
  *
  * La contraseña del cuidador de demo es fija y está a la vista a propósito:
  * estos datos son para desarrollo y para la defensa, nunca para producción.
@@ -22,29 +22,6 @@ import { AccessibilitySettings } from '../../accessibility/entities/accessibilit
 
 /** Contraseña del cuidador de demostración. Sólo para desarrollo. */
 const DEMO_PASSWORD = 'vozaac-demo';
-
-const VOCABULARY: Record<string, { color: string; words: string[] }> = {
-  Necesidades: {
-    color: '#E86A6A',
-    words: ['Agua', 'Baño', 'Ayuda', 'Dolor', 'Tengo hambre', 'Tengo frío'],
-  },
-  Acciones: {
-    color: '#6AB04C',
-    words: ['Quiero', 'Jugar', 'Comer', 'Dormir', 'Ir', 'Mirar'],
-  },
-  Comidas: {
-    color: '#E8A33D',
-    words: ['Pan', 'Leche', 'Fruta', 'Galletitas', 'Fideos'],
-  },
-  Sentimientos: {
-    color: '#C56AC9',
-    words: ['Contento', 'Triste', 'Enojado', 'Cansado'],
-  },
-  Social: {
-    color: '#F291B8',
-    words: ['Hola', 'Chau', 'Gracias', 'Por favor', 'Sí', 'No'],
-  },
-};
 
 async function seed(): Promise<void> {
   await dataSource.initialize();
@@ -87,24 +64,29 @@ async function seed(): Promise<void> {
   let categoryOrder = 0;
   let pictogramCount = 0;
 
-  for (const [name, { color, words }] of Object.entries(VOCABULARY)) {
+  for (const starter of STARTER_VOCABULARY) {
     const category = await categoryRepo.save(
-      categoryRepo.create({ name, color, order: categoryOrder++, boardId: board.id }),
+      categoryRepo.create({
+        name: starter.name,
+        color: starter.color,
+        order: categoryOrder++,
+        boardId: board.id,
+      }),
     );
 
     await pictogramRepo.save(
-      words.map((text, index) =>
+      starter.words.map((word, index) =>
         pictogramRepo.create({
-          text,
-          // Placeholder hasta integrar el banco ARASAAC (Módulo 4).
-          imageUrl: `https://static.arasaac.org/pictograms/placeholder/${encodeURIComponent(text)}.png`,
+          text: word.text,
+          imageUrl: `https://static.arasaac.org/pictograms/${word.arasaacId}/${word.arasaacId}_300.png`,
           categoryId: category.id,
-          source: PictogramSource.CUSTOM,
+          source: PictogramSource.ARASAAC,
+          arasaacId: word.arasaacId,
           order: index,
         }),
       ),
     );
-    pictogramCount += words.length;
+    pictogramCount += starter.words.length;
   }
 
   console.log(
