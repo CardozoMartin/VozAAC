@@ -19,6 +19,10 @@ Proyecto de tesis. El plan completo por módulos está en [Doc.txt](Doc.txt).
 | 6      | Historial y reportes                   | Entidad lista; agregaciones pendientes |
 | 7      | Offline y sincronización               | Pendiente                              |
 | 8      | Validación con usuarios reales         | Pendiente                              |
+| 9      | Vinculación y alertas al responsable   | Planificado — aporte fuera del Doc     |
+
+El plan del Módulo 9 y lo que sigue está en
+[docs/proximos-pasos.md](docs/proximos-pasos.md).
 
 ## Quién usa qué
 
