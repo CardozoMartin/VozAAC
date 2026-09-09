@@ -13,6 +13,8 @@ export interface DraftPictogram {
   audioUrl: string | null;
   arasaacId: number | null;
   categoryId: string;
+  /** Si tocarlo avisa a los responsables (Módulo 9, paso 4). */
+  isUrgent: boolean;
   /** Marcado para borrar al guardar; se sigue mostrando tachado hasta entonces. */
   deleted: boolean;
   /** Cambió respecto de lo que hay en el servidor. */
@@ -30,6 +32,7 @@ function toDraft(pictogram: Pictogram): DraftPictogram {
     audioUrl: pictogram.audioUrl,
     arasaacId: pictogram.arasaacId,
     categoryId: pictogram.categoryId,
+    isUrgent: pictogram.isUrgent,
     deleted: false,
     dirty: false,
   };
@@ -68,6 +71,9 @@ export function useEditorDraft(initial: Pictogram[], category: Category | null) 
           audioUrl: input.audioUrl ?? null,
           arasaacId: input.arasaacId ?? null,
           categoryId: category.id,
+          // Nada avisa por defecto: el terapeuta marca a mano el puñado que
+          // corresponde, o las notificaciones se vuelven ruido.
+          isUrgent: false,
           deleted: false,
           dirty: true,
         },
@@ -128,6 +134,7 @@ export function useEditorDraft(initial: Pictogram[], category: Category | null) 
             imageUrl: pictogram.imageUrl,
             categoryId: pictogram.categoryId,
             audioUrl: pictogram.audioUrl,
+            isUrgent: pictogram.isUrgent,
           };
 
           if (pictogram.id) {

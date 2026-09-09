@@ -5,6 +5,7 @@ import { api } from '../api/client';
 import { usePhrase } from '../state/usePhrase';
 import { useSpeech } from '../state/useSpeech';
 import { useUsageQueue } from '../state/useUsageQueue';
+import { useUrgentAlert } from '../state/useUrgentAlert';
 import { tremorOptionsFrom } from '../state/useTremorFilter';
 import { useLayout } from '../state/useLayout';
 import { PhraseBar } from '../components/PhraseBar';
@@ -24,10 +25,22 @@ interface Props {
   onExit?: () => void;
   /** Abre el modo terapeuta, previo PIN. Ausente si el cuidador no configuró uno. */
   onOpenEditor?: () => void;
+  /**
+   * Abre la bandeja de avisos (Módulo 9, paso 4). Ausente en el dispositivo
+   * del chico/a: los avisos son para los adultos, y él acaba de mandarlos.
+   */
+  onOpenAlerts?: () => void;
 }
 
 /** Pantalla principal: el comunicador que usa el chico/a (Módulo 3). */
-export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenEditor }: Props) {
+export function CommunicatorScreen({
+  token,
+  userId,
+  profileName,
+  onExit,
+  onOpenEditor,
+  onOpenAlerts,
+}: Props) {
   const [board, setBoard] = useState<Board | null>(null);
   const [settings, setSettings] = useState<AccessibilitySettings | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -36,6 +49,7 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
   const phrase = usePhrase();
   const { speak } = useSpeech(settings);
   const usage = useUsageQueue(token, userId);
+  const alert = useUrgentAlert(token, userId);
   const palette = paletteFor(settings?.colorMode);
   const tremor = useMemo(() => tremorOptionsFrom(settings), [settings]);
   const { isCompact } = useLayout();
@@ -79,6 +93,12 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
     // Se dice el pictograma suelto al tocarlo: es la respuesta inmediata que
     // enseña la relación entre la imagen y su palabra.
     speak(pictogram.text);
+
+    // Un pictograma urgente además avisa a los responsables (Módulo 9, paso
+    // 4). Va después de hablar y de sumarlo a la frase, no en su lugar: el
+    // chico/a está comunicando algo, y que además dispare un aviso no lo
+    // convierte en otra cosa.
+    alert.raise(pictogram);
   }
 
   function handleSpeak() {
@@ -139,11 +159,45 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
         tremor={tremor}
       />
 
+      {/*
+        El chico/a tiene que ver que su mensaje salió. Si no, no sabe si sirvió
+        de algo y lo va a tocar diez veces. El cartel se limpia solo a los
+        pocos segundos para no tapar la grilla.
+      */}
+      {alert.status !== 'idle' && (
+        <View
+          testID="alert-status"
+          style={[
+            styles.alertBanner,
+            {
+              backgroundColor: alert.status === 'failed' ? palette.danger : palette.accent,
+            },
+          ]}
+        >
+          <Text style={styles.alertText}>
+            {alert.status === 'sending' && `Avisando "${alert.text}"…`}
+            {alert.status === 'sent' && `Avisado ✓  "${alert.text}"`}
+            {alert.status === 'failed' && `No se pudo avisar "${alert.text}"`}
+          </Text>
+        </View>
+      )}
+
       <View style={[styles.footer, { borderColor: palette.border }]}>
         <Text style={[styles.profileName, { color: palette.textMuted }]} numberOfLines={1}>
           {profileName}
         </Text>
         <View style={styles.footerActions}>
+          {onOpenAlerts && (
+            <Pressable
+              testID="button-open-alerts"
+              accessibilityRole="button"
+              accessibilityLabel="Avisos"
+              onPress={onOpenAlerts}
+              style={[styles.exitButton, { borderColor: palette.border }]}
+            >
+              <Text style={{ color: palette.textMuted }}>Avisos</Text>
+            </Pressable>
+          )}
           {onOpenEditor && (
             <Pressable
               testID="button-open-editor"
@@ -179,6 +233,12 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
 }
 
 const styles = StyleSheet.create({
+  alertBanner: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+  },
+  alertText: { color: '#FFFFFF', fontSize: 20, fontWeight: '700', textAlign: 'center' },
   container: { flex: 1 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
   errorText: { fontSize: 18, textAlign: 'center', paddingHorizontal: spacing.lg },

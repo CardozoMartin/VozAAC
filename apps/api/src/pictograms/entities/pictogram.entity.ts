@@ -50,6 +50,20 @@ export class Pictogram {
   @Column({ type: 'int', default: 0 })
   order: number;
 
+  /**
+   * Si tocarlo avisa a los responsables (Módulo 9, paso 4).
+   *
+   * Sólo para lo urgente y corporal: dolor, me siento mal, angustia, miedo. No
+   * es una categoría entera sino un puñado de pictogramas marcados a mano.
+   *
+   * Pedir el baño no lleva esta marca: ya funciona con el tablero normal,
+   * porque es comunicación con quien está al lado. Si todo notifica, las
+   * notificaciones se vuelven ruido y el responsable las silencia — y ahí se
+   * pierden justo las que importan.
+   */
+  @Column({ type: 'boolean', default: false })
+  isUrgent: boolean;
+
   @Index()
   @Column({ type: 'uuid' })
   categoryId: string;

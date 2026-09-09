@@ -5,6 +5,7 @@ import type {
   AccessibilitySettings,
   ArasaacPictogram,
   AcceptInviteResponse,
+  Alert,
   Category,
   DeviceAuthResponse,
   DeviceKind,
@@ -37,6 +38,8 @@ export interface NewPictogram {
   source?: PictogramSource;
   arasaacId?: number;
   order?: number;
+  /** Si tocarlo avisa a los responsables (Módulo 9, paso 4). */
+  isUrgent?: boolean;
 }
 
 /** Puerto de la API en desarrollo; el mismo API_PORT del .env. */
@@ -223,6 +226,27 @@ export const api = {
 
   removeCaregiver: (token: string, userId: string, caregiverId: string) =>
     request<void>(`/users/${userId}/caregivers/${caregiverId}`, token, { method: 'DELETE' }),
+
+  // --- Alertas de pictogramas urgentes (Módulo 9, paso 4) ---
+
+  /** Avisa que el chico/a tocó un pictograma urgente. */
+  raiseAlert: (token: string, userId: string, pictogramId: string, occurredAt: string) =>
+    request<Alert>(`/users/${userId}/alerts`, token, {
+      method: 'POST',
+      body: JSON.stringify({ pictogramId, occurredAt }),
+    }),
+
+  /**
+   * Bandeja del responsable: las alertas de todos sus chicos/as.
+   *
+   * Con `onlyPending` trae sólo las que nadie atendió, que es lo que consulta
+   * la app cada veinte segundos para decidir si avisa.
+   */
+  alerts: (token: string, onlyPending = false) =>
+    request<Alert[]>(`/alerts${onlyPending ? '?pending=true' : ''}`, token),
+
+  acknowledgeAlert: (token: string, alertId: string) =>
+    request<Alert>(`/alerts/${alertId}/acknowledge`, token, { method: 'POST' }),
 
   defaultBoard: (token: string, userId: string) =>
     request<Board>(`/users/${userId}/boards/default`, token),

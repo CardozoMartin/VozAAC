@@ -20,7 +20,7 @@
 export interface StarterCategory {
   name: string;
   color: string;
-  words: { text: string; arasaacId: number }[];
+  words: { text: string; arasaacId: number; isUrgent?: boolean }[];
 }
 
 export const STARTER_VOCABULARY: StarterCategory[] = [
@@ -30,8 +30,11 @@ export const STARTER_VOCABULARY: StarterCategory[] = [
     words: [
       { text: 'Agua', arasaacId: 32464 },
       { text: 'Baño', arasaacId: 6929 },
-      { text: 'Ayuda', arasaacId: 12252 },
-      { text: 'Dolor', arasaacId: 2367 },
+      // Los dos únicos que avisan por defecto (Módulo 9, paso 4). El resto lo
+      // marca la familia con el uso: si todo notifica, el responsable silencia
+      // las notificaciones y se pierden justo las que importan.
+      { text: 'Ayuda', arasaacId: 12252, isUrgent: true },
+      { text: 'Dolor', arasaacId: 2367, isUrgent: true },
       { text: 'Tengo hambre', arasaacId: 35559 },
       { text: 'Tengo frío', arasaacId: 4652 },
     ],

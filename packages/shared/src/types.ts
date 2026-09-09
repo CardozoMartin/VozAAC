@@ -59,6 +59,8 @@ export interface Pictogram {
   arasaacId: number | null;
   order: number;
   categoryId: string;
+  /** Si tocarlo avisa a los responsables (Módulo 9, paso 4). */
+  isUrgent: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -198,6 +200,27 @@ export interface AcceptInviteResponse {
   userId: string;
   profileName: string;
   relationship: string | null;
+}
+
+/**
+ * Aviso que dispara un pictograma urgente (Módulo 9, paso 4).
+ *
+ * Guarda el texto además del id del pictograma: si el terapeuta lo borra o lo
+ * renombra después, el responsable tiene que poder seguir leyendo qué avisó el
+ * chico/a esa noche.
+ */
+export interface Alert {
+  id: string;
+  userId: string;
+  profileName: string;
+  pictogramId: string | null;
+  pictogramText: string;
+  pictogramImageUrl: string | null;
+  occurredAt: string;
+  /** Cuándo alguien la marcó como vista, o null si sigue pendiente. */
+  acknowledgedAt: string | null;
+  /** Quién la marcó como vista, para que los demás sepan que ya fue atendida. */
+  acknowledgedByName: string | null;
 }
 
 /** Resultado de una búsqueda en el banco ARASAAC (Módulo 4). */

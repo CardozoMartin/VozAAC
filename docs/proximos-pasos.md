@@ -16,10 +16,10 @@ para que una familia pudiera usar el proyecto sin tocar la base a mano.
 | `dfed24a` | La app encuentra sola la IP de la API             |
 | `6ee3efb` | Registro y alta de perfiles desde la app          |
 
-Del Módulo 9 están hechos los pasos 2 y 3: vinculación por código con sesión
-que no expira, y varios responsables por chico/a.
+El Módulo 9 está completo: vinculación por código con sesión que no expira,
+varios responsables por chico/a, y alertas de pictogramas urgentes.
 
-344 tests en verde: 89 unitarios de la API, 132 e2e, 10 de integración y 113 de
+378 tests en verde: 89 unitarios de la API, 149 e2e, 10 de integración y 130 de
 la app.
 
 Falta mergear a `main`: los Módulos 3, 4, 5 y 9 viven en esta rama.
@@ -44,7 +44,7 @@ salida al editor.
 1. ~~Registro, alta de perfiles y restaurar la sesión~~ — hecho en `6ee3efb`
 2. ~~Vinculación por código + sesión que no expira~~ — hecho
 3. ~~Varios responsables por chico/a~~ — hecho
-4. **Pictogramas urgentes + alertas** — primero sin push, después con push
+4. ~~Pictogramas urgentes + alertas~~ — hecho, sin push
 
 ### Cómo quedó la vinculación
 
@@ -87,16 +87,39 @@ El seed ahora deja dos responsables del mismo Mateo, `demo@vozaac.local` y
 `familia@vozaac.local`, las dos con `vozaac-demo`. Entrar con una y con la otra
 es la forma más rápida de mostrar esto en la defensa.
 
-### El bloqueante que queda
+### Cómo quedaron las alertas
 
-~~**El token dura 7 días.**~~ Resuelto: un dispositivo vinculado renueva su
-sesión solo y ya no vuelve nunca al login.
+El terapeuta marca un pictograma con "Avisa" desde el editor. Cuando el chico/a
+lo sostiene, sale el aviso (`POST /api/users/:userId/alerts`) y le aparece a
+todos sus responsables en la bandeja, que consulta cada veinte segundos. El
+primero que lo atiende queda registrado, así los demás saben que alguien ya
+fue.
+
+Un tablero nuevo trae "Ayuda" y "Dolor" ya marcados. El resto lo define cada
+familia con el uso — que es justo lo que conviene preguntar en el piloto.
+
+Las dos decisiones que deciden si esto sobrevive al uso real están cubiertas:
+el pictograma urgente pide sostener 700 ms más que uno común (800 ms si el
+filtro anti-temblor está apagado), y el chico/a ve un "Avisado ✓" que se limpia
+solo a los pocos segundos.
+
+### Los tres bloqueantes, resueltos
+
+~~**El token dura 7 días.**~~ Un dispositivo vinculado renueva su sesión solo y
+ya no vuelve nunca al login.
 
 ~~**Un perfil tiene un solo cuidador.**~~ Resuelto con `profile_caregivers`, y
 migrado antes del piloto como convenía.
 
-**`Pictogram` no tiene campo de urgencia.** Es lo único que falta para el paso
-4, y es el más fácil de los tres.
+~~**`Pictogram` no tiene campo de urgencia.**~~ Resuelto con `isUrgent`.
+
+### Lo que queda del Módulo 9
+
+**Push de verdad.** Hoy la app consulta cada veinte segundos, así que con la
+app cerrada el aviso no suena. Alcanza para el piloto y deja el circuito
+probado, pero para uso real hace falta un development build con credenciales de
+Expo. **WhatsApp o SMS** sería el paso siguiente, y además llega a responsables
+sin smartphone.
 
 ### Cómo llegan las alertas
 

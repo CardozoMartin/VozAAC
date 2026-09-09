@@ -25,6 +25,7 @@ function pictograma(id: string, text: string): Pictogram {
     arasaacId: null,
     order: 0,
     categoryId: 'cat-1',
+    isUrgent: false,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   };

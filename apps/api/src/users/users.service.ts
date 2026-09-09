@@ -122,6 +122,7 @@ export class UsersService {
               categoryId: category.id,
               source: PictogramSource.ARASAAC,
               arasaacId: word.arasaacId,
+              isUrgent: word.isUrgent ?? false,
               order: wordIndex,
             }),
           ),

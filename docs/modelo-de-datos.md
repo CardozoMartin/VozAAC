@@ -230,6 +230,37 @@ contra códigos que existen — sumarle intentos a códigos inventados no proteg
 nada y permitiría que un tercero quemara el código de otro tipeando cualquier
 cosa.
 
+## Alertas de pictogramas urgentes (Módulo 9, paso 4)
+
+`pictograms.isUrgent` marca qué celdas avisan al tocarse, y la tabla `alerts`
+guarda cada aviso hasta que un responsable lo atiende.
+
+### Por qué `Alert` y no `UsageLog`
+
+El toque queda registrado en las dos tablas, pero resuelven cosas distintas.
+`UsageLog` es material de reportes: crece rápido, nadie lo lee de a una fila y
+se consulta agregado. Una alerta es un mensaje dirigido a personas, se lee de a
+una y tiene estado —vista o no—. Meterlas en la misma tabla obligaría a filtrar
+el historial entero cada veinte segundos para encontrar las pocas filas que
+importan.
+
+### Qué se duplica y por qué
+
+`pictogramText` y `pictogramImageUrl` se copian al emitir el aviso, aunque
+`pictogramId` ya apunte al pictograma. Es deliberado: si el terapeuta lo
+renombra o lo borra después, la alerta tiene que seguir diciendo lo que el
+chico/a quiso decir esa noche. La FK usa `ON DELETE SET NULL` por lo mismo —
+borrar un pictograma no puede borrar el aviso.
+
+`occurredAt` va aparte de `createdAt` porque el aviso puede llegar tarde —sin
+señal, o con la app cerrada— y lo que importa es cuándo lo tocó el chico/a, no
+cuándo se enteró el servidor.
+
+`acknowledgedByCaregiverId` importa por el paso 3: con varios responsables, si
+la madre ya fue a ver al chico/a, el padre necesita saberlo para no salir
+corriendo también. No se reescribe una vez puesto: quien atendió primero es el
+dato que sirve.
+
 ## Qué está verificado por tests
 
 Los tests de integración en

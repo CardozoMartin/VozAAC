@@ -54,7 +54,5 @@ export function gridDimensionsFor(
   const { columns, rows } = GRID_DIMENSIONS[gridSize];
   const [larger, smaller] = columns >= rows ? [columns, rows] : [rows, columns];
 
-  return isLandscape
-    ? { columns: larger, rows: smaller }
-    : { columns: smaller, rows: larger };
+  return isLandscape ? { columns: larger, rows: smaller } : { columns: smaller, rows: larger };
 }

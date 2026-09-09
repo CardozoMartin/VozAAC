@@ -19,7 +19,7 @@ Proyecto de tesis. El plan completo por módulos está en [Doc.txt](Doc.txt).
 | 6      | Historial y reportes                   | Entidad lista; agregaciones pendientes |
 | 7      | Offline y sincronización               | Pendiente                              |
 | 8      | Validación con usuarios reales         | Pendiente                              |
-| 9      | Vinculación y alertas al responsable   | Vinculación y responsables; faltan alertas |
+| 9      | Vinculación y alertas al responsable   | Completo — vinculación, responsables y alertas |
 
 El plan del Módulo 9 y lo que sigue está en
 [docs/proximos-pasos.md](docs/proximos-pasos.md).
@@ -211,6 +211,49 @@ tablero → perfil.
 | POST   | `/api/uploads/audio`                      | Sube un audio (máx. 2 MB)          |
 | GET    | `/api/arasaac/search?q=`                  | Busca en el banco ARASAAC          |
 
+Alertas de pictogramas urgentes (Módulo 9, paso 4). Cuando el chico/a toca "me
+duele" o "me siento mal", les llega un aviso a todos sus responsables.
+
+| Método | Ruta                             | Qué hace                              |
+| ------ | -------------------------------- | ------------------------------------- |
+| POST   | `/api/users/:userId/alerts`      | El chico/a avisa: emite la alerta     |
+| GET    | `/api/alerts`                    | Bandeja del responsable               |
+| GET    | `/api/alerts?pending=true`       | Sólo las que nadie atendió            |
+| POST   | `/api/alerts/:id/acknowledge`    | Marca el aviso como visto             |
+
+Sólo avisa lo urgente y corporal: dolor, me siento mal, angustia, miedo. Se
+marca con `pictograms.isUrgent`, un puñado de celdas y no una categoría entera.
+Un tablero nuevo trae marcados **"Ayuda" y "Dolor"**, que son los dos casos que
+ninguna familia querría tener que descubrir configurando; el resto lo define
+cada una con el uso.
+
+**Pedir el baño no lleva marca.** Ya funciona con el tablero normal, porque es
+comunicación con quien está al lado. Si todo notifica, las notificaciones se
+vuelven ruido y el responsable las silencia — y ahí se pierden justo las que
+importan. La API además rechaza con 400 un aviso por un pictograma sin marcar,
+para que un error de la app no convierta cualquier toque en una notificación.
+
+**Un pictograma urgente pide sostener más.** Reusa el hold del filtro
+anti-temblor del Módulo 5: suma 700 ms al que ya tenga configurado, y fuerza
+800 ms si el filtro está apagado. Un toque accidental que despierte a alguien a
+las 3 AM hace que la función se desactive en una semana, y esta es la barrera
+más barata contra eso — sin sumar un diálogo que el chico/a tendría que leer.
+
+**El chico/a ve que su mensaje salió**, con un "Avisado ✓" que se limpia solo a
+los pocos segundos. Si no lo viera, no sabría si sirvió de algo y lo tocaría
+diez veces. Cuando falla se le dice que no salió: un "avisado" falso es peor
+que nada, porque se queda esperando ayuda que nadie pidió.
+
+La bandeja se consulta cada veinte segundos en vez de recibir push. Es a
+propósito: así funciona en Expo Go, sin development build ni credenciales, y el
+circuito queda probado entero para sumarle push encima sin rehacer nada. Más
+adelante se puede sumar WhatsApp o SMS, que además llegan a responsables sin
+smartphone.
+
+El aviso guarda el texto y la imagen copiados del pictograma: si el terapeuta
+lo renombra o lo borra después, el responsable tiene que poder seguir leyendo
+qué avisó el chico/a esa noche.
+
 Responsables de un chico/a (Módulo 9, paso 3). Un perfil puede estar a cargo de
 varias personas —madre, padre, un hermano, la maestra—, cada una con su propia
 cuenta.
@@ -362,6 +405,12 @@ padre, con cuentas distintas, viendo y editando el mismo tablero. Y del otro
 lado, que alguien que no es responsable no vea nada —ni el perfil, ni la lista
 de responsables, ni el tablero—, que sigue siendo la regla de privacidad
 central del proyecto.
+
+Los del paso 4 cubren el circuito entero —el chico/a avisa, les llega a todos
+sus responsables, uno lo atiende y los demás ven quién fue— y sobre todo el
+hold reforzado, que es lo que evita el aviso accidental: que un pictograma
+urgente no se dispare con un toque, ni siquiera con el filtro anti-temblor
+apagado.
 
 Los tests unitarios mockean los repositorios y verifican reglas de negocio. Los
 de integración corren contra SQLite en memoria, así que no necesitan Docker:

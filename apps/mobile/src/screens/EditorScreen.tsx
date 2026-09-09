@@ -282,6 +282,7 @@ export function EditorScreen({
               onRemove={() => draft.remove(pictogram.key)}
               onRestore={() => draft.restore(pictogram.key)}
               onChangeText={(text) => draft.edit(pictogram.key, { text })}
+              onToggleUrgent={() => draft.edit(pictogram.key, { isUrgent: !pictogram.isUrgent })}
             />
           ))}
           {draft.pictograms.length === 0 && (
@@ -301,10 +302,18 @@ interface RowProps {
   onRemove: () => void;
   onRestore: () => void;
   onChangeText: (text: string) => void;
+  onToggleUrgent: () => void;
 }
 
 /** Una fila editable del listado. */
-function EditorRow({ pictogram, palette, onRemove, onRestore, onChangeText }: RowProps) {
+function EditorRow({
+  pictogram,
+  palette,
+  onRemove,
+  onRestore,
+  onChangeText,
+  onToggleUrgent,
+}: RowProps) {
   return (
     <View
       testID={`editor-row-${pictogram.key}`}
@@ -338,6 +347,33 @@ function EditorRow({ pictogram, palette, onRemove, onRestore, onChangeText }: Ro
           },
         ]}
       />
+
+      {/*
+        Marca de aviso (Módulo 9, paso 4). Sólo para lo urgente y corporal:
+        dolor, me siento mal, angustia, miedo. Pedir el baño no lleva marca —ya
+        funciona con el tablero normal—, y si todo notifica el responsable
+        silencia las notificaciones y se pierden justo las que importan.
+      */}
+      {!pictogram.deleted && (
+        <Pressable
+          testID={`editor-urgent-${pictogram.key}`}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: pictogram.isUrgent }}
+          accessibilityLabel={`Avisar al tocar ${pictogram.text}`}
+          onPress={onToggleUrgent}
+          style={[
+            styles.rowButton,
+            {
+              borderColor: pictogram.isUrgent ? palette.danger : palette.border,
+              backgroundColor: pictogram.isUrgent ? palette.danger : 'transparent',
+            },
+          ]}
+        >
+          <Text style={{ color: pictogram.isUrgent ? '#FFFFFF' : palette.textMuted }}>
+            {pictogram.isUrgent ? 'Avisa' : 'No avisa'}
+          </Text>
+        </Pressable>
+      )}
 
       {pictogram.deleted ? (
         <Pressable

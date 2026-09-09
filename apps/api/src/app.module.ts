@@ -15,6 +15,7 @@ import { UsageModule } from './usage/usage.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { ArasaacModule } from './arasaac/arasaac.module';
 import { DevicesModule } from './devices/devices.module';
+import { AlertsModule } from './alerts/alerts.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { DevicesModule } from './devices/devices.module';
     UploadsModule,
     ArasaacModule,
     DevicesModule,
+    AlertsModule,
   ],
 })
 export class AppModule {}

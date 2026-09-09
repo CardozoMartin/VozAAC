@@ -10,6 +10,7 @@ import { AccessibilitySettings } from '../src/accessibility/entities/accessibili
 import { UsageLog } from '../src/usage/entities/usage-log.entity';
 import { DeviceSession } from '../src/devices/entities/device-session.entity';
 import { LinkCode } from '../src/devices/entities/link-code.entity';
+import { Alert } from '../src/alerts/entities/alert.entity';
 
 export const TEST_ENTITIES = [
   Caregiver,
@@ -23,6 +24,7 @@ export const TEST_ENTITIES = [
   UsageLog,
   DeviceSession,
   LinkCode,
+  Alert,
 ];
 
 /**

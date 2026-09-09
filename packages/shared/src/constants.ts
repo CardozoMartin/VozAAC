@@ -96,3 +96,36 @@ export const INVITE_CODE = {
   expiresInHours: 48,
   maxAttempts: LINK_CODE.maxAttempts,
 } as const;
+
+/**
+ * Alertas de pictogramas urgentes (Módulo 9, paso 4).
+ *
+ * Cuando el chico/a toca un pictograma marcado como urgente —"me duele", "me
+ * siento mal"— les llega un aviso a sus responsables.
+ */
+export const URGENT_ALERT = {
+  /**
+   * Milisegundos extra de hold sobre un pictograma urgente, además del que ya
+   * pida el filtro anti-temblor.
+   *
+   * Un toque accidental que despierte a alguien a las 3 AM hace que la función
+   * se desactive en una semana. Pedir sostener más que en un pictograma común
+   * es la barrera más barata contra eso, y reusa el mecanismo del Módulo 5 en
+   * vez de sumar un diálogo de confirmación que el chico/a tendría que leer.
+   */
+  extraHoldMs: 700,
+  /**
+   * Hold mínimo de un pictograma urgente cuando el filtro anti-temblor está
+   * apagado. Sin esto, en un tablero sin filtro el aviso saldría con un roce.
+   */
+  minHoldMs: 800,
+  /**
+   * Cuánto se le muestra al chico/a el "avisado ✓".
+   *
+   * Tiene que ver que su mensaje salió: si no, no sabe si sirvió de algo y lo
+   * va a tocar diez veces.
+   */
+  confirmationMs: 4000,
+  /** Cada cuánto la app del responsable consulta si hay alertas nuevas. */
+  pollIntervalMs: 20_000,
+} as const;

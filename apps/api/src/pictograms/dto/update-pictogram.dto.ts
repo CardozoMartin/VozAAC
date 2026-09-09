@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, IsUUID, Length, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, IsUUID, Length, Min } from 'class-validator';
 
 export class UpdatePictogramDto {
   @IsOptional()
@@ -25,4 +25,14 @@ export class UpdatePictogramDto {
   @IsInt()
   @Min(0)
   order?: number;
+
+  /**
+   * Marca o desmarca el pictograma como urgente (Módulo 9, paso 4).
+   *
+   * Se edita después de creado porque la lista de qué avisa la termina de
+   * definir la familia con el uso, no quien armó el tablero el primer día.
+   */
+  @IsOptional()
+  @IsBoolean()
+  isUrgent?: boolean;
 }

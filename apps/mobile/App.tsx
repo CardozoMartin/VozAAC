@@ -7,6 +7,7 @@ import { LoginScreen } from './src/screens/LoginScreen';
 import { LinkDeviceScreen } from './src/screens/LinkDeviceScreen';
 import { DevicesScreen } from './src/screens/DevicesScreen';
 import { CaregiversScreen } from './src/screens/CaregiversScreen';
+import { AlertsScreen } from './src/screens/AlertsScreen';
 import { ProfilePickerScreen } from './src/screens/ProfilePickerScreen';
 import { CommunicatorScreen } from './src/screens/CommunicatorScreen';
 import { PinGateScreen } from './src/screens/PinGateScreen';
@@ -18,7 +19,8 @@ import { api } from './src/api/client';
 import { paletteFor } from './src/theme';
 
 /** Dónde está parada la app dentro del perfil elegido. */
-type Mode = 'communicator' | 'pin' | 'editor' | 'accessibility' | 'devices' | 'caregivers';
+type Mode =
+  'communicator' | 'pin' | 'editor' | 'accessibility' | 'devices' | 'caregivers' | 'alerts';
 
 /**
  * Navegación de la app.
@@ -181,6 +183,9 @@ export default function App() {
         />
       );
     }
+    if (mode === 'alerts') {
+      return <AlertsScreen token={token} onExit={() => setMode('communicator')} />;
+    }
     if (mode === 'caregivers') {
       return (
         <CaregiversScreen
@@ -231,6 +236,9 @@ export default function App() {
         // deshacer sólo lo dejaría afuera de su comunicador.
         onExit={esDispositivoDeChico ? undefined : () => setProfile(null)}
         onOpenEditor={() => setMode('pin')}
+        // En el dispositivo del chico/a no se ofrece la bandeja: los avisos
+        // son para los adultos, y él acaba de mandarlos.
+        onOpenAlerts={esDispositivoDeChico ? undefined : () => setMode('alerts')}
       />
     );
   }

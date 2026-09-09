@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -8,7 +8,7 @@ import {
   View,
   type GestureResponderEvent,
 } from 'react-native';
-import type { Pictogram } from '@vozaac/shared';
+import { URGENT_ALERT, type Pictogram } from '@vozaac/shared';
 import type { Palette } from '../theme';
 import { spacing } from '../theme';
 import { useTremorFilter, type TremorFilterOptions } from '../state/useTremorFilter';
@@ -21,6 +21,30 @@ interface Props {
   onPress: (pictogram: Pictogram) => void;
   /** Configuración del filtro anti-temblor (Módulo 5). */
   tremor: TremorFilterOptions;
+}
+
+/**
+ * Opciones del filtro para esta celda.
+ *
+ * Un pictograma urgente (Módulo 9, paso 4) pide sostener bastante más que uno
+ * común: un toque accidental que despierte a alguien a las 3 AM hace que la
+ * función se desactive en una semana. Se reusa el hold del filtro anti-temblor
+ * del Módulo 5 en vez de sumar un diálogo de confirmación, que el chico/a
+ * tendría que leer.
+ *
+ * Si el filtro está apagado igual se fuerza el hold, sólo para las celdas
+ * urgentes: sin eso, en un tablero sin filtro el aviso saldría con un roce.
+ */
+function tremorForCell(tremor: TremorFilterOptions, isUrgent: boolean): TremorFilterOptions {
+  if (!isUrgent) return tremor;
+
+  return {
+    ...tremor,
+    enabled: true,
+    holdToConfirmMs: tremor.enabled
+      ? tremor.holdToConfirmMs + URGENT_ALERT.extraHoldMs
+      : URGENT_ALERT.minHoldMs,
+  };
 }
 
 /**
@@ -44,7 +68,12 @@ export function PictogramCell({ pictogram, color, palette, onPress, tremor }: Pr
     onPress(pictogram);
   }, [onPress, pictogram]);
 
-  const filter = useTremorFilter(tremor, handleConfirm);
+  // El pictograma urgente exige su propio hold, más largo que el del resto.
+  const cellTremor = useMemo(
+    () => tremorForCell(tremor, pictogram.isUrgent),
+    [tremor, pictogram.isUrgent],
+  );
+  const filter = useTremorFilter(cellTremor, handleConfirm);
 
   const stopAnimation = useCallback(() => {
     animation.current?.stop();
@@ -55,7 +84,7 @@ export function PictogramCell({ pictogram, color, palette, onPress, tremor }: Pr
 
   useEffect(() => stopAnimation, [stopAnimation]);
 
-  const showsProgress = tremor.enabled && tremor.holdToConfirmMs > 0;
+  const showsProgress = cellTremor.enabled && cellTremor.holdToConfirmMs > 0;
 
   function handlePressIn(event: GestureResponderEvent) {
     const { pageX, pageY } = event.nativeEvent;
@@ -66,7 +95,7 @@ export function PictogramCell({ pictogram, color, palette, onPress, tremor }: Pr
     progress.setValue(0);
     animation.current = Animated.timing(progress, {
       toValue: 1,
-      duration: tremor.holdToConfirmMs,
+      duration: cellTremor.holdToConfirmMs,
       // La barra anima el ancho, que no es una propiedad que el driver nativo
       // sepa interpolar; con useNativeDriver en true no se movería.
       useNativeDriver: false,
@@ -98,8 +127,12 @@ export function PictogramCell({ pictogram, color, palette, onPress, tremor }: Pr
       unstable_pressDelay={0}
       style={({ pressed }) => [
         styles.cell,
+        // El pictograma urgente lleva borde más grueso y del color de alerta:
+        // tiene que distinguirse de un vistazo del resto de la grilla, tanto
+        // para el chico/a como para el adulto que mira por encima del hombro.
+        pictogram.isUrgent && styles.urgentCell,
         {
-          borderColor: color,
+          borderColor: pictogram.isUrgent ? palette.danger : color,
           backgroundColor: palette.surface,
           // Respuesta visual inmediata: confirma el toque a quien no oye el TTS.
           opacity: pressed ? 0.6 : 1,
@@ -113,7 +146,7 @@ export function PictogramCell({ pictogram, color, palette, onPress, tremor }: Pr
           style={[
             styles.progress,
             {
-              backgroundColor: color,
+              backgroundColor: pictogram.isUrgent ? palette.danger : color,
               width: progress.interpolate({
                 inputRange: [0, 1],
                 outputRange: ['0%', '100%'],
@@ -150,6 +183,7 @@ const styles = StyleSheet.create({
     // Recorta la barra de progreso a los bordes redondeados de la celda.
     overflow: 'hidden',
   },
+  urgentCell: { borderWidth: 5 },
   progress: {
     position: 'absolute',
     left: 0,
