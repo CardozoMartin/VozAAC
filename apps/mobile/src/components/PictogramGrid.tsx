@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { GRID_DIMENSIONS, GridSize, type Pictogram } from '@vozaac/shared';
+import { GridSize, type Pictogram } from '@vozaac/shared';
 import { PictogramCell } from './PictogramCell';
 import type { Palette } from '../theme';
 import { spacing } from '../theme';
 import type { TremorFilterOptions } from '../state/useTremorFilter';
+import { gridDimensionsFor, useLayout } from '../state/useLayout';
 
 interface Props {
   pictograms: Pictogram[];
@@ -23,6 +24,11 @@ interface Props {
  * tienen que repartirse el alto disponible: menos celdas significa celdas más
  * grandes, que es justamente el sentido de poder elegir 2x2 en vez de 4x5.
  *
+ * La disposición se acomoda a la orientación: las mismas celdas se reparten
+ * con el lado largo hacia donde la pantalla tiene lugar. Así la app sirve
+ * tanto en la tablet apaisada como en el celular vertical que la familia ya
+ * tiene, sin que el terapeuta tenga que reconfigurar nada al rotar.
+ *
  * Los pictogramas que no entran en la página quedan fuera por ahora; la
  * paginación llega con el editor del Módulo 4.
  */
@@ -34,7 +40,8 @@ export function PictogramGrid({
   onSelect,
   tremor,
 }: Props) {
-  const { columns, rows } = GRID_DIMENSIONS[gridSize];
+  const { isLandscape } = useLayout();
+  const { columns, rows } = gridDimensionsFor(gridSize, isLandscape);
 
   const grid = useMemo(() => {
     const visible = pictograms.slice(0, columns * rows);

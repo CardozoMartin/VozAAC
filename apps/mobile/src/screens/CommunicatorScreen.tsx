@@ -6,6 +6,7 @@ import { usePhrase } from '../state/usePhrase';
 import { useSpeech } from '../state/useSpeech';
 import { useUsageQueue } from '../state/useUsageQueue';
 import { tremorOptionsFrom } from '../state/useTremorFilter';
+import { useLayout } from '../state/useLayout';
 import { PhraseBar } from '../components/PhraseBar';
 import { CategoryTabs } from '../components/CategoryTabs';
 import { PictogramGrid } from '../components/PictogramGrid';
@@ -32,6 +33,7 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
   const usage = useUsageQueue(token, userId);
   const palette = paletteFor(settings?.colorMode);
   const tremor = useMemo(() => tremorOptionsFrom(settings), [settings]);
+  const { isCompact } = useLayout();
 
   useEffect(() => {
     let cancelled = false;
@@ -131,7 +133,12 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
       />
 
       <View style={[styles.footer, { borderColor: palette.border }]}>
-        <Text style={[styles.profileName, { color: palette.textMuted }]}>{profileName}</Text>
+        <Text
+          style={[styles.profileName, { color: palette.textMuted }]}
+          numberOfLines={1}
+        >
+          {profileName}
+        </Text>
         <View style={styles.footerActions}>
           {onOpenEditor && (
             <Pressable
@@ -141,7 +148,11 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
               onPress={onOpenEditor}
               style={[styles.exitButton, { borderColor: palette.border }]}
             >
-              <Text style={{ color: palette.textMuted }}>Modo terapeuta</Text>
+              {/* En celular vertical no entran las dos etiquetas completas, y
+                  acortar la del editor es preferible a que se corten las dos. */}
+              <Text style={{ color: palette.textMuted }}>
+                {isCompact ? 'Terapeuta' : 'Modo terapeuta'}
+              </Text>
             </Pressable>
           )}
           <Pressable
@@ -151,7 +162,9 @@ export function CommunicatorScreen({ token, userId, profileName, onExit, onOpenE
             onPress={onExit}
             style={[styles.exitButton, { borderColor: palette.border }]}
           >
-            <Text style={{ color: palette.textMuted }}>Cambiar perfil</Text>
+            <Text style={{ color: palette.textMuted }}>
+              {isCompact ? 'Perfil' : 'Cambiar perfil'}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -171,7 +184,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
-  profileName: { fontSize: 14 },
+  profileName: { fontSize: 14, flexShrink: 1, marginRight: spacing.sm },
   footerActions: { flexDirection: 'row', gap: spacing.sm },
   exitButton: {
     borderWidth: 1,

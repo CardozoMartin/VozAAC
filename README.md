@@ -86,7 +86,19 @@ npm run mobile
 ```
 
 Se abre Expo con un QR: escaneándolo desde Expo Go la app corre en el celular
-o la tablet. Ojo con un detalle: desde un dispositivo real `localhost` es el
+o la tablet. La orientación queda libre y la grilla se acomoda al rotar: las
+mismas celdas se reparten con el lado largo hacia donde la pantalla tiene
+lugar, así que una 3x4 son cuatro columnas en la tablet apaisada y tres
+columnas por cuatro filas en el celular vertical. La cantidad de pictogramas
+no cambia nunca —eso lo eligió el terapeuta, y rotar el dispositivo no debería
+agregar ni sacar vocabulario—. En vertical la barra de frase se apila para no
+comerle ancho a los pictogramas.
+
+Se probó primero en tablet, pero no la requiere: en un celular las grillas 2x2
+y 2x3 —las pensadas para quien más dificultad motriz tiene— quedan cómodas, y
+que funcione en el dispositivo que la familia ya tiene importa para el piloto.
+
+Ojo con un detalle: desde un dispositivo real `localhost` es el
 propio teléfono, así que hay que apuntar `expo.extra.apiUrl` de
 [apps/mobile/app.json](apps/mobile/app.json) a la IP de la máquina en la red
 local (por ejemplo `http://192.168.0.10:3010/api`).

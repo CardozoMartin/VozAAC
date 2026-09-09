@@ -3,7 +3,7 @@
     "name": "VozAAC",
     "slug": "vozaac",
     "version": "0.1.0",
-    "orientation": "landscape",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {

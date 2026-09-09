@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import {
   ColorMode,
-  GRID_DIMENSIONS,
+  GRID_CELL_COUNT,
   GridSize,
   SPEECH_PITCH,
   SPEECH_RATE,
@@ -19,6 +19,7 @@ import {
 } from '@vozaac/shared';
 import { api } from '../api/client';
 import { useSpeech } from '../state/useSpeech';
+import { gridDimensionsFor, useLayout } from '../state/useLayout';
 import { paletteFor, spacing } from '../theme';
 
 interface Props {
@@ -62,6 +63,7 @@ export function AccessibilityScreen({ token, userId, onExit }: Props) {
 
   const palette = paletteFor(settings?.colorMode);
   const { speak } = useSpeech(settings);
+  const { isLandscape } = useLayout();
 
   useEffect(() => {
     let cancelled = false;
@@ -196,12 +198,15 @@ export function AccessibilityScreen({ token, userId, onExit }: Props) {
       {/* --- Grilla --- */}
       <Text style={[styles.section, { color: palette.text }]}>Tamaño de la cuadrícula</Text>
       <Text style={[styles.hint, { color: palette.textMuted }]}>
-        Menos celdas significa celdas más grandes, y menor exigencia motriz.
+        Menos celdas significa celdas más grandes, y menor exigencia motriz. La disposición se
+        acomoda sola al rotar el dispositivo; la cantidad de celdas no cambia.
       </Text>
       <View style={styles.options}>
         {Object.values(GridSize).map((size) => {
           const active = settings.gridSize === size;
-          const { columns, rows } = GRID_DIMENSIONS[size];
+          // La disposición que va a tener acá y ahora: mostrar la nominal
+          // haría que el botón no coincida con lo que se ve al volver.
+          const { columns, rows } = gridDimensionsFor(size, isLandscape);
           return (
             <Pressable
               key={size}
@@ -223,7 +228,7 @@ export function AccessibilityScreen({ token, userId, onExit }: Props) {
                 {columns} × {rows}
               </Text>
               <Text style={{ color: active ? '#FFFFFF' : palette.textMuted, fontSize: 12 }}>
-                {columns * rows} celdas
+                {GRID_CELL_COUNT[size]} celdas
               </Text>
             </Pressable>
           );
