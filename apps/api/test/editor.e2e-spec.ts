@@ -9,11 +9,11 @@ import { AuthModule } from '../src/auth/auth.module';
 import { UsersModule } from '../src/users/users.module';
 import { CategoriesModule } from '../src/categories/categories.module';
 import { PictogramsModule } from '../src/pictograms/pictograms.module';
-import { User } from '../src/users/entities/user.entity';
 import { Board } from '../src/boards/entities/board.entity';
 import { Category } from '../src/categories/entities/category.entity';
 import { Pictogram } from '../src/pictograms/entities/pictogram.entity';
 import { TEST_ENTITIES } from './test-datasource';
+import { crearPerfil } from './create-profile';
 
 /**
  * E2E del editor del modo terapeuta (Módulo 4).
@@ -69,9 +69,7 @@ describe('Editor de pictogramas (e2e)', () => {
       .post('/api/auth/register')
       .send({ email, password: 'contrasena-valida', fullName: 'Cuidador' });
 
-    const user = await dataSource
-      .getRepository(User)
-      .save({ name: 'Perfil', caregiverId: body.caregiver.id } as User);
+    const user = await crearPerfil(dataSource, body.caregiver.id);
     const board = await dataSource
       .getRepository(Board)
       .save({ name: 'Casa', userId: user.id, isDefault: true } as Board);

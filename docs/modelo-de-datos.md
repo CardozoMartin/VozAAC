@@ -131,7 +131,60 @@ La alternativa era declarar todo como `varchar`, pero eso le sacaría a
 PostgreSQL la validación del enum a nivel base — justamente lo que queremos
 conservar donde importa.
 
-## Entidades del Módulo 9
+## Varios responsables por chico/a (Módulo 9, paso 3)
+
+El modelo original del Doc daba un solo cuidador por perfil, y eso dejaba
+afuera el caso normal: la madre y el padre cuidan al mismo chico/a, y muchas
+veces también un hermano mayor, una abuela o la maestra. Con la relación
+uno-a-muchos el segundo responsable tenía que compartir la cuenta del primero,
+que además de incómodo mezcla en un solo login a personas distintas y hace
+imposible saber después quién cambió qué.
+
+```
+Caregiver ◄──── N ProfileCaregiver N ────► User
+                                    │
+              CaregiverInvite ──────┘
+```
+
+### ProfileCaregiver
+
+La tabla intermedia. Desde acá sale **el acceso**: `ProfileOwnershipService`,
+el listado de perfiles, el editor, el buscador y la vinculación de dispositivos
+cruzan por ella en vez de comparar `users.caregiverId`.
+
+Todos los responsables pueden lo mismo, así que no hay columna de rol.
+`relationship` ("Mamá", "Hermano") es sólo una etiqueta para distinguir quién
+es quién en la lista.
+
+`users.caregiverId` se conserva: sigue diciendo quién creó el perfil, que es un
+dato real, y de ahí cuelga la cascada de borrado. Lo que cambió es que ya no
+decide quién ve qué.
+
+El índice único sobre (userId, caregiverId) evita filas repetidas —sumar dos
+veces a la misma persona no significa nada distinto de sumarla una— y además es
+el que resuelve la pregunta que se hace en cada request del editor.
+
+### CaregiverInvite
+
+El código con el que se suma a alguien. Se parece al `LinkCode` de
+dispositivos, pero resuelve otra cosa: aquel enrola un aparato y le abre una
+sesión, este suma a una persona que tiene su propia cuenta.
+
+Vive 48 horas y no quince minutos: el de dispositivos se canjea con los dos
+aparatos sobre la mesa, y este se manda por mensaje a alguien que capaz se
+registra a la noche.
+
+### Qué hay que recordar al migrar
+
+La migración `MultipleCaregivers` hace un backfill: cada perfil existente queda
+a cargo de quien lo creó. Sin ese `INSERT ... SELECT`, al terminar la migración
+el acceso saldría de una tabla vacía y ninguna familia vería a su hijo/a al
+abrir la app.
+
+Revertirla descarta los responsables agregados, y es inevitable:
+`users.caregiverId` guarda uno solo y no hay dónde poner a los demás.
+
+## Vinculación de dispositivos (Módulo 9, paso 2)
 
 La vinculación de dispositivos suma dos entidades que cuelgan de `Caregiver` y,
 opcionalmente, de `User`. No forman parte del modelo del Doc: son del aporte

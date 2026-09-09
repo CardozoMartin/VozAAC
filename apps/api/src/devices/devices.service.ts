@@ -20,6 +20,7 @@ import { DeviceSession } from './entities/device-session.entity';
 import { LinkCode } from './entities/link-code.entity';
 import { User } from '../users/entities/user.entity';
 import { Caregiver } from '../caregivers/entities/caregiver.entity';
+import { randomCode } from '../common/random-code';
 import { CreateLinkCodeDto } from './dto/create-link-code.dto';
 import { RedeemLinkCodeDto } from './dto/redeem-link-code.dto';
 
@@ -61,10 +62,12 @@ export class DevicesService {
     }
 
     if (dto.userId) {
-      // Con el caregiverId en el where, un perfil ajeno da 404 y no confirma
-      // que el id exista, el mismo criterio que UsersService.
+      // La condición va en el where y un perfil ajeno da 404, no 403: el 403
+      // confirmaría que el id existe. Cruza por profile_caregivers porque
+      // cualquier responsable del chico/a puede vincularle un dispositivo, no
+      // sólo quien creó el perfil.
       const user = await this.usersRepository.findOne({
-        where: { id: dto.userId, caregiverId },
+        where: { id: dto.userId, caregiverLinks: { caregiverId } },
       });
       if (!user) {
         throw new NotFoundException(`No existe el perfil ${dto.userId}`);
@@ -264,7 +267,7 @@ export class DevicesService {
    */
   private async generateUniqueCode(): Promise<string> {
     for (let intento = 0; intento < 5; intento += 1) {
-      const code = randomCode();
+      const code = randomCode(LINK_CODE.alphabet, LINK_CODE.length);
       const existe = await this.codesRepository.findOne({ where: { code } });
       if (!existe) return code;
     }
@@ -274,27 +277,6 @@ export class DevicesService {
 
 function codigoInvalido(): UnauthorizedException {
   return new UnauthorizedException('El código no es válido o ya venció');
-}
-
-/**
- * Código aleatorio con randomBytes y no con Math.random, que es predecible.
- *
- * El descarte de los bytes altos evita el sesgo del módulo: 256 no es múltiplo
- * de 31, así que tomar `byte % 31` haría que las primeras letras del alfabeto
- * salieran un poco más seguido que las últimas.
- */
-function randomCode(): string {
-  const { alphabet, length } = LINK_CODE;
-  const limite = Math.floor(256 / alphabet.length) * alphabet.length;
-  let code = '';
-  while (code.length < length) {
-    for (const byte of randomBytes(length)) {
-      if (byte >= limite) continue;
-      code += alphabet[byte % alphabet.length];
-      if (code.length === length) break;
-    }
-  }
-  return code;
 }
 
 /**

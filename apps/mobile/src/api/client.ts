@@ -4,13 +4,16 @@ import type {
   Board,
   AccessibilitySettings,
   ArasaacPictogram,
+  AcceptInviteResponse,
   Category,
   DeviceAuthResponse,
   DeviceKind,
   LinkCodeResponse,
   LinkedDevice,
+  InviteCodeResponse,
   Pictogram,
   PictogramSource,
+  ProfileCaregiverInfo,
   RefreshResponse,
   UserProfile,
   UsageEventType,
@@ -173,7 +176,13 @@ export const api = {
   /** Crea el perfil de un chico/a, con su tablero y vocabulario inicial. */
   createProfile: (
     token: string,
-    input: { name: string; birthDate?: string | null; photoUrl?: string | null },
+    input: {
+      name: string;
+      birthDate?: string | null;
+      photoUrl?: string | null;
+      /** Cómo se llama a sí mismo quien lo crea: "Mamá", "Papá". */
+      relationship?: string | null;
+    },
   ) => request<UserProfile>('/users', token, { method: 'POST', body: JSON.stringify(input) }),
 
   updateProfile: (
@@ -188,6 +197,32 @@ export const api = {
 
   deleteProfile: (token: string, id: string) =>
     request<void>(`/users/${id}`, token, { method: 'DELETE' }),
+
+  // --- Responsables del chico/a (Módulo 9, paso 3) ---
+
+  /** Quiénes están a cargo: madre, padre, un hermano, la maestra. */
+  profileCaregivers: (token: string, userId: string) =>
+    request<ProfileCaregiverInfo[]>(`/users/${userId}/caregivers`, token),
+
+  /** Genera el código con el que se suma otro responsable. */
+  inviteCaregiver: (token: string, userId: string, relationship?: string) =>
+    request<InviteCodeResponse>(`/users/${userId}/invites`, token, {
+      method: 'POST',
+      body: JSON.stringify(relationship ? { relationship } : {}),
+    }),
+
+  /**
+   * Acepta una invitación. No cuelga de /users/:id porque quien acepta todavía
+   * no ve ese perfil —ni siquiera sabe su id—: lo único que tiene es el código.
+   */
+  acceptInvite: (token: string, code: string) =>
+    request<AcceptInviteResponse>('/invites/accept', token, {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    }),
+
+  removeCaregiver: (token: string, userId: string, caregiverId: string) =>
+    request<void>(`/users/${userId}/caregivers/${caregiverId}`, token, { method: 'DELETE' }),
 
   defaultBoard: (token: string, userId: string) =>
     request<Board>(`/users/${userId}/boards/default`, token),

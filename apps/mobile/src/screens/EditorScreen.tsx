@@ -25,6 +25,8 @@ interface Props {
   onOpenAccessibility?: () => void;
   /** Abre la lista de dispositivos vinculados (Módulo 9). */
   onOpenDevices?: () => void;
+  /** Abre la lista de responsables del chico/a (Módulo 9, paso 3). */
+  onOpenCaregivers?: () => void;
 }
 
 /**
@@ -34,7 +36,14 @@ interface Props {
  * editar con el chico/a al lado, y que los pictogramas cambien bajo su dedo
  * mientras tanto sería confuso para quien está comunicándose.
  */
-export function EditorScreen({ token, userId, onExit, onOpenAccessibility, onOpenDevices }: Props) {
+export function EditorScreen({
+  token,
+  userId,
+  onExit,
+  onOpenAccessibility,
+  onOpenDevices,
+  onOpenCaregivers,
+}: Props) {
   const [board, setBoard] = useState<Board | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -167,6 +176,17 @@ export function EditorScreen({ token, userId, onExit, onOpenAccessibility, onOpe
               style={[styles.secondary, { borderColor: palette.border }]}
             >
               <Text style={{ color: palette.text }}>Dispositivos</Text>
+            </Pressable>
+          )}
+          {onOpenCaregivers && (
+            <Pressable
+              testID="button-open-caregivers"
+              accessibilityRole="button"
+              accessibilityLabel="Responsables"
+              onPress={onOpenCaregivers}
+              style={[styles.secondary, { borderColor: palette.border }]}
+            >
+              <Text style={{ color: palette.text }}>Responsables</Text>
             </Pressable>
           )}
           {draft.hasChanges && (

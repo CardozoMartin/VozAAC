@@ -76,7 +76,8 @@ export class PictogramsService {
       .innerJoin('pictogram.category', 'category')
       .innerJoin('category.board', 'board')
       .innerJoin('board.user', 'user')
-      .where('user.caregiverId = :caregiverId', { caregiverId })
+      .innerJoin('user.caregiverLinks', 'link')
+      .where('link.caregiverId = :caregiverId', { caregiverId })
       .andWhere('LOWER(pictogram.text) LIKE LOWER(:term)', { term: `%${term.trim()}%` })
       .orderBy('pictogram.text', 'ASC')
       .take(50);

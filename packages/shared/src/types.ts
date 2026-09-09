@@ -165,6 +165,41 @@ export interface UserProfile extends User {
   age: number | null;
 }
 
+/**
+ * Un responsable de un chico/a, como se ve en la pantalla donde se administran
+ * (Módulo 9, paso 3).
+ *
+ * Todos los responsables pueden lo mismo, así que acá no hay rol ni permisos:
+ * `relationship` es sólo una etiqueta para distinguir quién es quién.
+ */
+export interface ProfileCaregiverInfo {
+  id: string;
+  caregiverId: string;
+  fullName: string;
+  email: string;
+  relationship: string | null;
+  /** Si es el cuidador que está mirando, para no ofrecerle quitarse a sí mismo. */
+  isSelf: boolean;
+  createdAt: string;
+}
+
+/** Invitación recién generada, tal como se le muestra a quien invita. */
+export interface InviteCodeResponse {
+  code: string;
+  userId: string;
+  /** Nombre del chico/a, para que quien invita confirme que es el correcto. */
+  profileName: string;
+  relationship: string | null;
+  expiresAt: string;
+}
+
+/** Lo que recibe quien acepta una invitación. */
+export interface AcceptInviteResponse {
+  userId: string;
+  profileName: string;
+  relationship: string | null;
+}
+
 /** Resultado de una búsqueda en el banco ARASAAC (Módulo 4). */
 export interface ArasaacPictogram {
   id: number;

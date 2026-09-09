@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { INVITE_CODE } from '@vozaac/shared';
 import type { UserProfile } from '@vozaac/shared';
 import { api } from '../api/client';
 import { paletteFor, spacing } from '../theme';
@@ -33,6 +34,10 @@ export function ProfilePickerScreen({ token, onSelect, onLogout }: Props) {
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [redeeming, setRedeeming] = useState(false);
+  const [inviteCode, setInviteCode] = useState('');
+  const [accepting, setAccepting] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
   const palette = paletteFor(undefined);
 
   /**
@@ -67,6 +72,38 @@ export function ProfilePickerScreen({ token, onSelect, onLogout }: Props) {
     setAdding(false);
     setNewName('');
     setCreateError(null);
+  }
+
+  /**
+   * Acepta una invitación para ser responsable de un chico/a (Módulo 9, paso 3).
+   *
+   * Es por donde entra el segundo responsable: el padre se registra con su
+   * propia cuenta, escribe el código que le pasó la madre, y desde ahí ve al
+   * mismo chico/a. Se recargan los perfiles porque el que se suma recién ahora
+   * aparece en la lista.
+   */
+  async function handleAcceptInvite() {
+    const code = inviteCode.trim();
+    if (code.length !== INVITE_CODE.length) return;
+
+    setAccepting(true);
+    setInviteError(null);
+    try {
+      await api.acceptInvite(token, code);
+      setProfiles(await api.profiles(token));
+      closeRedeem();
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'No se pudo aceptar la invitación');
+      setInviteCode('');
+    } finally {
+      setAccepting(false);
+    }
+  }
+
+  function closeRedeem() {
+    setRedeeming(false);
+    setInviteCode('');
+    setInviteError(null);
   }
 
   useEffect(() => {
@@ -161,6 +198,16 @@ export function ProfilePickerScreen({ token, onSelect, onLogout }: Props) {
         </Pressable>
 
         <Pressable
+          testID="button-open-invite"
+          accessibilityRole="button"
+          accessibilityLabel="Tengo una invitación"
+          onPress={() => setRedeeming(true)}
+          style={[styles.logout, { borderColor: palette.border }]}
+        >
+          <Text style={{ color: palette.textMuted }}>Tengo una invitación</Text>
+        </Pressable>
+
+        <Pressable
           testID="button-logout"
           accessibilityRole="button"
           onPress={onLogout}
@@ -231,6 +278,82 @@ export function ProfilePickerScreen({ token, onSelect, onLogout }: Props) {
           </View>
         </View>
       </Modal>
+
+      <Modal visible={redeeming} transparent animationType="fade" onRequestClose={closeRedeem}>
+        <View style={styles.backdrop}>
+          <View style={[styles.dialog, { backgroundColor: palette.background }]}>
+            <Text style={[styles.dialogTitle, { color: palette.text }]}>Tengo una invitación</Text>
+            <Text style={[styles.dialogHint, { color: palette.textMuted }]}>
+              Escribí el código que te pasó quien ya está a cargo del chico/a. Vas a poder ver y
+              editar su tablero igual que esa persona.
+            </Text>
+
+            <TextInput
+              testID="input-invite-code"
+              accessibilityLabel="Código de invitación"
+              placeholder={'-'.repeat(INVITE_CODE.length)}
+              placeholderTextColor={palette.textMuted}
+              value={inviteCode}
+              onChangeText={(value) =>
+                // Se normaliza mientras se tipea: el código se dicta o llega
+                // por mensaje, y quien lo escribe no tiene por qué acertar el
+                // formato exacto.
+                setInviteCode(
+                  value
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, '')
+                    .slice(0, INVITE_CODE.length),
+                )
+              }
+              autoCapitalize="characters"
+              autoCorrect={false}
+              maxLength={INVITE_CODE.length}
+              autoFocus
+              style={[styles.codeInput, { borderColor: palette.border, color: palette.text }]}
+            />
+
+            {inviteError && (
+              <Text testID="invite-error" style={[styles.error, { color: palette.danger }]}>
+                {inviteError}
+              </Text>
+            )}
+
+            <View style={styles.dialogActions}>
+              <Pressable
+                testID="button-cancel-invite"
+                accessibilityRole="button"
+                onPress={closeRedeem}
+                style={[styles.dialogButton, { borderColor: palette.border, borderWidth: 1 }]}
+              >
+                <Text style={{ color: palette.text }}>Cancelar</Text>
+              </Pressable>
+
+              <Pressable
+                testID="button-accept-invite"
+                accessibilityRole="button"
+                accessibilityState={{
+                  disabled: inviteCode.length !== INVITE_CODE.length || accepting,
+                }}
+                disabled={inviteCode.length !== INVITE_CODE.length || accepting}
+                onPress={() => void handleAcceptInvite()}
+                style={[
+                  styles.dialogButton,
+                  {
+                    backgroundColor: palette.accent,
+                    opacity: inviteCode.length !== INVITE_CODE.length || accepting ? 0.5 : 1,
+                  },
+                ]}
+              >
+                {accepting ? (
+                  <ActivityIndicator color="#FFFFFF" testID="accepting-invite" />
+                ) : (
+                  <Text style={styles.addButtonText}>Aceptar</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -271,6 +394,14 @@ const styles = StyleSheet.create({
   dialogTitle: { fontSize: 22, fontWeight: '700' },
   dialogHint: { fontSize: 14, lineHeight: 20 },
   input: { borderWidth: 2, borderRadius: 12, padding: spacing.md, fontSize: 18 },
+  codeInput: {
+    borderWidth: 2,
+    borderRadius: 12,
+    padding: spacing.md,
+    fontSize: 28,
+    letterSpacing: 8,
+    textAlign: 'center',
+  },
   dialogActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.sm },
   dialogButton: {
     borderRadius: 12,

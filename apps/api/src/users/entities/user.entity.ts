@@ -14,6 +14,7 @@ import { Caregiver } from '../../caregivers/entities/caregiver.entity';
 import { Board } from '../../boards/entities/board.entity';
 import { AccessibilitySettings } from '../../accessibility/entities/accessibility-settings.entity';
 import { UsageLog } from '../../usage/entities/usage-log.entity';
+import { ProfileCaregiver } from './profile-caregiver.entity';
 import { timestampColumnType } from '../../common/column-types';
 
 /**
@@ -36,6 +37,14 @@ export class User {
   @Column({ type: 'varchar', length: 500, nullable: true })
   photoUrl: string | null;
 
+  /**
+   * Quién creó el perfil.
+   *
+   * Desde el paso 3 del Módulo 9 el acceso lo define `caregiverLinks` y ya no
+   * esta columna: un chico/a puede tener varios responsables. Se conserva
+   * porque sigue siendo un dato real —alguien dio de alta este perfil— y
+   * porque la cascada de borrado cuelga de acá.
+   */
   @Index()
   @Column({ type: 'uuid' })
   caregiverId: string;
@@ -46,6 +55,13 @@ export class User {
   })
   @JoinColumn({ name: 'caregiverId' })
   caregiver: Caregiver;
+
+  /**
+   * Todos los responsables del chico/a, incluido quien lo creó. Es lo que
+   * define quién puede ver y editar su tablero.
+   */
+  @OneToMany(() => ProfileCaregiver, (link) => link.user, { cascade: true })
+  caregiverLinks: ProfileCaregiver[];
 
   @OneToMany(() => Board, (board) => board.user, { cascade: true })
   boards: Board[];

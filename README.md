@@ -19,7 +19,7 @@ Proyecto de tesis. El plan completo por módulos está en [Doc.txt](Doc.txt).
 | 6      | Historial y reportes                   | Entidad lista; agregaciones pendientes |
 | 7      | Offline y sincronización               | Pendiente                              |
 | 8      | Validación con usuarios reales         | Pendiente                              |
-| 9      | Vinculación y alertas al responsable   | Vinculación lista; alertas pendientes  |
+| 9      | Vinculación y alertas al responsable   | Vinculación y responsables; faltan alertas |
 
 El plan del Módulo 9 y lo que sigue está en
 [docs/proximos-pasos.md](docs/proximos-pasos.md).
@@ -107,7 +107,10 @@ npm run api
 
 La API queda en `http://localhost:3010/api`.
 
-El seed deja un cuidador de demostración: `demo@vozaac.local` / `vozaac-demo`.
+El seed deja dos responsables del mismo chico/a, los dos con la contraseña
+`vozaac-demo`: `demo@vozaac.local` (Terapeuta) y `familia@vozaac.local` (Mamá).
+Son dos a propósito: entrar con una y con la otra y ver el mismo Mateo es lo
+que muestra para qué sirve la tabla intermedia del Módulo 9.
 
 ### App móvil
 
@@ -207,6 +210,38 @@ tablero → perfil.
 | POST   | `/api/uploads/image`                      | Sube una imagen (máx. 5 MB)        |
 | POST   | `/api/uploads/audio`                      | Sube un audio (máx. 2 MB)          |
 | GET    | `/api/arasaac/search?q=`                  | Busca en el banco ARASAAC          |
+
+Responsables de un chico/a (Módulo 9, paso 3). Un perfil puede estar a cargo de
+varias personas —madre, padre, un hermano, la maestra—, cada una con su propia
+cuenta.
+
+| Método | Ruta                                     | Qué hace                            |
+| ------ | ---------------------------------------- | ----------------------------------- |
+| GET    | `/api/users/:id/caregivers`              | Quiénes están a cargo del chico/a   |
+| POST   | `/api/users/:id/invites`                 | Genera el código para sumar a otro  |
+| POST   | `/api/invites/accept`                    | Acepta una invitación               |
+| DELETE | `/api/users/:id/caregivers/:caregiverId` | Quita a un responsable              |
+
+**Todos pueden lo mismo**: ver el tablero, editarlo, invitar a otro y borrar el
+perfil. No hay dueño ni invitados. Es lo que refleja cómo funciona una familia
+—si la madre y el padre cuidan al mismo chico/a, los dos necesitan poder
+arreglar el tablero un domingo a la noche— y evita tener que explicarle a
+alguien por qué no puede hacer algo que la otra persona sí. El campo
+`relationship` ("Mamá", "Hermano") es sólo una etiqueta para distinguir quién es
+quién en la lista; no define permisos.
+
+`/api/invites/accept` no cuelga de `/users/:id` porque quien acepta todavía no
+ve ese perfil —ni siquiera sabe su id—: lo único que tiene es el código. Sí
+exige estar autenticado, a diferencia del canje de dispositivos: el invitado ya
+tiene su cuenta, y lo que falta es atarla al perfil.
+
+No se puede quitar al último responsable: un perfil sin nadie a cargo quedaría
+inaccesible para todos y sólo se recuperaría tocando la base a mano. Para
+deshacerse del perfil está el borrado, que además limpia sus datos.
+
+El acceso sale de la tabla `profile_caregivers` y ya no de `users.caregiverId`,
+que se conserva sólo para saber quién creó el perfil. Eso alcanza a todo:
+listar perfiles, el editor, el buscador y la vinculación de dispositivos.
 
 Vinculación de dispositivos (Módulo 9). Es el aporte que va más allá del plan
 del Doc: el padre configura el panel desde su celular y después enrola los
@@ -321,6 +356,12 @@ se verifica que un 401 dispare la renovación y el reintento sin que el chico/a
 vea nada, y que dos llamadas simultáneas compartan una sola renovación: como el
 backend rota el token en cada uso, dos renovaciones a la vez cerrarían la
 sesión sin motivo.
+
+Los del paso 3 del Módulo 9 verifican el caso que motiva todo: la madre y el
+padre, con cuentas distintas, viendo y editando el mismo tablero. Y del otro
+lado, que alguien que no es responsable no vea nada —ni el perfil, ni la lista
+de responsables, ni el tablero—, que sigue siendo la regla de privacidad
+central del proyecto.
 
 Los tests unitarios mockean los repositorios y verifican reglas de negocio. Los
 de integración corren contra SQLite en memoria, así que no necesitan Docker:

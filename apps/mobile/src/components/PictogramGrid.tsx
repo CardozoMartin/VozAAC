@@ -32,14 +32,7 @@ interface Props {
  * Los pictogramas que no entran en la página quedan fuera por ahora; la
  * paginación llega con el editor del Módulo 4.
  */
-export function PictogramGrid({
-  pictograms,
-  gridSize,
-  color,
-  palette,
-  onSelect,
-  tremor,
-}: Props) {
+export function PictogramGrid({ pictograms, gridSize, color, palette, onSelect, tremor }: Props) {
   const { isLandscape } = useLayout();
   const { columns, rows } = gridDimensionsFor(gridSize, isLandscape);
 

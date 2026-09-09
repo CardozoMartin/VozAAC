@@ -10,12 +10,12 @@ import { UsersModule } from '../src/users/users.module';
 import { BoardsModule } from '../src/boards/boards.module';
 import { AccessibilityModule } from '../src/accessibility/accessibility.module';
 import { UsageModule } from '../src/usage/usage.module';
-import { User } from '../src/users/entities/user.entity';
 import { Board } from '../src/boards/entities/board.entity';
 import { Category } from '../src/categories/entities/category.entity';
 import { Pictogram } from '../src/pictograms/entities/pictogram.entity';
 import { UsageLog } from '../src/usage/entities/usage-log.entity';
 import { TEST_ENTITIES } from './test-datasource';
+import { crearPerfil } from './create-profile';
 
 /**
  * E2E de los endpoints que alimentan el comunicador (Módulo 3).
@@ -71,9 +71,7 @@ describe('Comunicador (e2e)', () => {
       .post('/api/auth/register')
       .send({ email, password: 'contrasena-valida', fullName: 'Cuidador' });
 
-    const user = await dataSource
-      .getRepository(User)
-      .save({ name: 'Perfil', caregiverId: body.caregiver.id } as User);
+    const user = await crearPerfil(dataSource, body.caregiver.id);
 
     const board = await dataSource
       .getRepository(Board)
@@ -121,9 +119,7 @@ describe('Comunicador (e2e)', () => {
       const { body } = await request(app.getHttpServer())
         .post('/api/auth/register')
         .send({ email: 'sintablero@vozaac.local', password: 'contrasena-valida', fullName: 'C' });
-      const user = await dataSource
-        .getRepository(User)
-        .save({ name: 'Sin tablero', caregiverId: body.caregiver.id } as User);
+      const user = await crearPerfil(dataSource, body.caregiver.id, { name: 'Sin tablero' });
 
       await request(app.getHttpServer())
         .get(`/api/users/${user.id}/boards/default`)

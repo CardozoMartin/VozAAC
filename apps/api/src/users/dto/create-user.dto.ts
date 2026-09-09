@@ -21,4 +21,15 @@ export class CreateUserDto {
   @IsString()
   @Length(1, 500)
   photoUrl?: string | null;
+
+  /**
+   * Cómo se llama a sí mismo quien crea el perfil: "Mamá", "Papá", "Hermano".
+   *
+   * Es sólo una etiqueta para la lista de responsables y no define permisos
+   * (Módulo 9, paso 3): todos los responsables pueden lo mismo.
+   */
+  @IsOptional()
+  @IsString()
+  @Length(1, 60)
+  relationship?: string | null;
 }

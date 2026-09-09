@@ -6,6 +6,7 @@ import type { DeviceAuthResponse, UserProfile } from '@vozaac/shared';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { LinkDeviceScreen } from './src/screens/LinkDeviceScreen';
 import { DevicesScreen } from './src/screens/DevicesScreen';
+import { CaregiversScreen } from './src/screens/CaregiversScreen';
 import { ProfilePickerScreen } from './src/screens/ProfilePickerScreen';
 import { CommunicatorScreen } from './src/screens/CommunicatorScreen';
 import { PinGateScreen } from './src/screens/PinGateScreen';
@@ -17,7 +18,7 @@ import { api } from './src/api/client';
 import { paletteFor } from './src/theme';
 
 /** Dónde está parada la app dentro del perfil elegido. */
-type Mode = 'communicator' | 'pin' | 'editor' | 'accessibility' | 'devices';
+type Mode = 'communicator' | 'pin' | 'editor' | 'accessibility' | 'devices' | 'caregivers';
 
 /**
  * Navegación de la app.
@@ -180,6 +181,21 @@ export default function App() {
         />
       );
     }
+    if (mode === 'caregivers') {
+      return (
+        <CaregiversScreen
+          token={token}
+          userId={profile.id}
+          profileName={profile.name}
+          // Si se quitó a sí mismo ya no puede ver este perfil, así que se
+          // vuelve al selector y no al editor.
+          onExit={() => {
+            setProfile(null);
+            setMode('communicator');
+          }}
+        />
+      );
+    }
     if (mode === 'editor') {
       return (
         <EditorScreen
@@ -190,6 +206,7 @@ export default function App() {
           onExit={() => setMode('communicator')}
           onOpenAccessibility={() => setMode('accessibility')}
           onOpenDevices={() => setMode('devices')}
+          onOpenCaregivers={() => setMode('caregivers')}
         />
       );
     }

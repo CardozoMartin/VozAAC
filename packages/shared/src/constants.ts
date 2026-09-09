@@ -81,3 +81,18 @@ export const LINK_CODE = {
  * El padre necesita reconocerlo en la lista para poder revocarlo.
  */
 export const DEFAULT_DEVICE_NAME = 'Dispositivo sin nombre';
+
+/**
+ * Invitación de otro responsable a un chico/a (Módulo 9, paso 3).
+ *
+ * Reusa la forma del código de vinculación —mismo alfabeto y mismo largo,
+ * porque se dicta igual— pero es otra cosa: no enrola un dispositivo, suma a
+ * una persona que tiene su propia cuenta. Por eso vive más: quien invita puede
+ * mandarlo por mensaje y la otra persona registrarse recién a la noche.
+ */
+export const INVITE_CODE = {
+  length: LINK_CODE.length,
+  alphabet: LINK_CODE.alphabet,
+  expiresInHours: 48,
+  maxAttempts: LINK_CODE.maxAttempts,
+} as const;

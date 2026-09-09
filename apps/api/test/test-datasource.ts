@@ -1,6 +1,8 @@
 import { DataSource } from 'typeorm';
 import { Caregiver } from '../src/caregivers/entities/caregiver.entity';
 import { User } from '../src/users/entities/user.entity';
+import { ProfileCaregiver } from '../src/users/entities/profile-caregiver.entity';
+import { CaregiverInvite } from '../src/users/entities/caregiver-invite.entity';
 import { Board } from '../src/boards/entities/board.entity';
 import { Category } from '../src/categories/entities/category.entity';
 import { Pictogram } from '../src/pictograms/entities/pictogram.entity';
@@ -12,6 +14,8 @@ import { LinkCode } from '../src/devices/entities/link-code.entity';
 export const TEST_ENTITIES = [
   Caregiver,
   User,
+  ProfileCaregiver,
+  CaregiverInvite,
   Board,
   Category,
   Pictogram,

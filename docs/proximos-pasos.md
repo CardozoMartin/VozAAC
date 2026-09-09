@@ -16,10 +16,10 @@ para que una familia pudiera usar el proyecto sin tocar la base a mano.
 | `dfed24a` | La app encuentra sola la IP de la API             |
 | `6ee3efb` | Registro y alta de perfiles desde la app          |
 
-Del Módulo 9 está hecho el paso 2: vinculación por código y sesión que no
-expira.
+Del Módulo 9 están hechos los pasos 2 y 3: vinculación por código con sesión
+que no expira, y varios responsables por chico/a.
 
-309 tests en verde: 89 unitarios de la API, 109 e2e, 10 de integración y 101 de
+344 tests en verde: 89 unitarios de la API, 132 e2e, 10 de integración y 113 de
 la app.
 
 Falta mergear a `main`: los Módulos 3, 4, 5 y 9 viven en esta rama.
@@ -43,7 +43,7 @@ salida al editor.
 
 1. ~~Registro, alta de perfiles y restaurar la sesión~~ — hecho en `6ee3efb`
 2. ~~Vinculación por código + sesión que no expira~~ — hecho
-3. **Varios responsables por chico/a** — tabla intermedia cuidador–perfil
+3. ~~Varios responsables por chico/a~~ — hecho
 4. **Pictogramas urgentes + alertas** — primero sin push, después con push
 
 ### Cómo quedó la vinculación
@@ -65,22 +65,38 @@ En el dispositivo de un chico/a la app además esconde la salida al selector de
 perfiles: su perfil quedó fijado al vincularlo, y una puerta que él no sabe
 deshacer sólo lo dejaría afuera de su comunicador.
 
-### Los dos bloqueantes que quedan
+### Cómo quedaron los responsables
+
+Cualquier responsable genera un código desde la pantalla de responsables
+(`POST /api/users/:id/invites`). La otra persona crea su cuenta en la app,
+entra al selector de perfiles, toca "Tengo una invitación" y lo escribe. Desde
+ahí ve y edita el mismo tablero.
+
+Todos pueden lo mismo, incluido invitar y borrar el perfil. No hay dueño ni
+invitados: si la madre y el padre cuidan al mismo chico/a, los dos necesitan
+poder arreglar el tablero un domingo a la noche, y un modelo con niveles
+obligaría a explicarle a alguien por qué no puede hacer algo que la otra
+persona sí. Lo único que no se permite es quitar al último responsable, porque
+dejaría el perfil inaccesible para todos.
+
+El acceso pasó a salir de `profile_caregivers`. `users.caregiverId` se conserva
+para saber quién creó el perfil, y la migración hace el backfill: cada perfil
+existente queda a cargo de quien lo creó.
+
+El seed ahora deja dos responsables del mismo Mateo, `demo@vozaac.local` y
+`familia@vozaac.local`, las dos con `vozaac-demo`. Entrar con una y con la otra
+es la forma más rápida de mostrar esto en la defensa.
+
+### El bloqueante que queda
 
 ~~**El token dura 7 días.**~~ Resuelto: un dispositivo vinculado renueva su
 sesión solo y ya no vuelve nunca al login.
 
-**Un perfil tiene un solo cuidador.** La relación es uno-a-muchos, así que hoy
-el modelo no soporta que la madre y el padre vean al mismo chico/a. Hace falta
-una tabla intermedia, y conviene migrarlo antes del piloto: hacerlo con datos
-reales de familias encima es bastante peor.
+~~**Un perfil tiene un solo cuidador.**~~ Resuelto con `profile_caregivers`, y
+migrado antes del piloto como convenía.
 
-Hoy el dispositivo de un segundo responsable se vincula colgado de la cuenta
-del primero, así que ve los mismos perfiles pero no tiene cuenta propia. Para
-el piloto alcanza; para que cada responsable tenga su usuario, hace falta la
-tabla intermedia.
-
-**`Pictogram` no tiene campo de urgencia.** Es el más fácil de los dos.
+**`Pictogram` no tiene campo de urgencia.** Es lo único que falta para el paso
+4, y es el más fácil de los tres.
 
 ### Cómo llegan las alertas
 
