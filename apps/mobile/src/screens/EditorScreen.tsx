@@ -15,7 +15,8 @@ import { api } from '../api/client';
 import { useEditorDraft, type DraftPictogram } from '../state/useEditorDraft';
 import { ArasaacPicker } from '../components/ArasaacPicker';
 import { CategoryTabs } from '../components/CategoryTabs';
-import { paletteFor, spacing } from '../theme';
+import { paletteFor, radius, spacing, touchTarget, typography } from '../theme';
+import { Button } from '../components/ui';
 
 interface Props {
   token: string;
@@ -136,9 +137,7 @@ export function EditorScreen({
     return (
       <View style={[styles.centered, { backgroundColor: palette.background }]}>
         <Text style={[styles.error, { color: palette.danger }]}>{error}</Text>
-        <Pressable onPress={onExit} style={[styles.secondary, { borderColor: palette.border }]}>
-          <Text style={{ color: palette.text }}>Volver</Text>
-        </Pressable>
+        <Button label="Volver" variant="secondary" palette={palette} onPress={onExit} />
       </View>
     );
   }
@@ -157,82 +156,61 @@ export function EditorScreen({
         <Text style={[styles.title, { color: palette.text }]}>Editar tablero</Text>
         <View style={styles.headerActions}>
           {onOpenAccessibility && (
-            <Pressable
+            <Button
               testID="button-open-accessibility"
-              accessibilityRole="button"
-              accessibilityLabel="Accesibilidad"
+              label="Accesibilidad"
+              variant="secondary"
+              palette={palette}
               onPress={onOpenAccessibility}
-              style={[styles.secondary, { borderColor: palette.border }]}
-            >
-              <Text style={{ color: palette.text }}>Accesibilidad</Text>
-            </Pressable>
+            />
           )}
           {onOpenDevices && (
-            <Pressable
+            <Button
               testID="button-open-devices"
-              accessibilityRole="button"
-              accessibilityLabel="Dispositivos"
+              label="Dispositivos"
+              variant="secondary"
+              palette={palette}
               onPress={onOpenDevices}
-              style={[styles.secondary, { borderColor: palette.border }]}
-            >
-              <Text style={{ color: palette.text }}>Dispositivos</Text>
-            </Pressable>
+            />
           )}
           {onOpenCaregivers && (
-            <Pressable
+            <Button
               testID="button-open-caregivers"
-              accessibilityRole="button"
-              accessibilityLabel="Responsables"
+              label="Responsables"
+              variant="secondary"
+              palette={palette}
               onPress={onOpenCaregivers}
-              style={[styles.secondary, { borderColor: palette.border }]}
-            >
-              <Text style={{ color: palette.text }}>Responsables</Text>
-            </Pressable>
+            />
           )}
           {draft.hasChanges && (
             <Text testID="unsaved-badge" style={[styles.badge, { color: palette.danger }]}>
               Cambios sin guardar
             </Text>
           )}
-          <Pressable
+          <Button
             testID="button-discard"
-            accessibilityRole="button"
-            accessibilityState={{ disabled: !draft.hasChanges }}
+            label="Descartar"
+            variant="secondary"
+            palette={palette}
             disabled={!draft.hasChanges}
             onPress={handleDiscard}
-            style={[
-              styles.secondary,
-              { borderColor: palette.border, opacity: draft.hasChanges ? 1 : 0.4 },
-            ]}
-          >
-            <Text style={{ color: palette.textMuted }}>Descartar</Text>
-          </Pressable>
-          <Pressable
+          />
+          <Button
             testID="button-save"
-            accessibilityRole="button"
-            accessibilityState={{ disabled: !draft.hasChanges || draft.saving }}
-            disabled={!draft.hasChanges || draft.saving}
+            label="Guardar cambios"
+            palette={palette}
+            disabled={!draft.hasChanges}
+            loading={draft.saving}
             onPress={handleSave}
-            style={[
-              styles.primary,
-              { backgroundColor: palette.accent, opacity: draft.hasChanges ? 1 : 0.4 },
-            ]}
-          >
-            {draft.saving ? (
-              <ActivityIndicator color="#FFFFFF" testID="saving" />
-            ) : (
-              <Text style={styles.primaryText}>Guardar cambios</Text>
-            )}
-          </Pressable>
-          <Pressable
+          />
+          <Button
             testID="button-editor-exit"
-            accessibilityRole="button"
+            label="Salir"
             accessibilityLabel="Salir del editor"
+            variant="secondary"
+            palette={palette}
             onPress={confirmExit}
-            style={[styles.secondary, { borderColor: palette.border }]}
-          >
-            <Text style={{ color: palette.textMuted }}>Salir</Text>
-          </Pressable>
+          />
         </View>
       </View>
 
@@ -256,15 +234,12 @@ export function EditorScreen({
             onSubmitEditing={handleAddManual}
             style={[styles.input, { borderColor: palette.border, color: palette.text }]}
           />
-          <Pressable
+          <Button
             testID="button-add-pictogram"
-            accessibilityRole="button"
-            accessibilityLabel="Agregar"
+            label="Agregar"
+            palette={palette}
             onPress={handleAddManual}
-            style={[styles.primary, { backgroundColor: palette.accent }]}
-          >
-            <Text style={styles.primaryText}>Agregar</Text>
-          </Pressable>
+          />
         </View>
 
         <Text style={[styles.sectionTitle, { color: palette.text }]}>Banco ARASAAC</Text>
@@ -376,25 +351,24 @@ function EditorRow({
       )}
 
       {pictogram.deleted ? (
-        <Pressable
+        <Button
           testID={`editor-restore-${pictogram.key}`}
-          accessibilityRole="button"
+          label="Deshacer"
           accessibilityLabel="Deshacer el borrado"
+          variant="link"
+          palette={palette}
           onPress={onRestore}
-          style={[styles.rowButton, { borderColor: palette.border }]}
-        >
-          <Text style={{ color: palette.accent }}>Deshacer</Text>
-        </Pressable>
+          style={styles.rowButton}
+        />
       ) : (
-        <Pressable
+        <Button
           testID={`editor-remove-${pictogram.key}`}
-          accessibilityRole="button"
+          label="Borrar"
           accessibilityLabel={`Borrar ${pictogram.text}`}
+          variant="danger"
+          palette={palette}
           onPress={onRemove}
-          style={[styles.rowButton, { borderColor: palette.border }]}
-        >
-          <Text style={{ color: palette.danger }}>Borrar</Text>
-        </Pressable>
+        />
       )}
     </View>
   );
@@ -412,48 +386,52 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  title: { fontSize: 22, fontWeight: '700' },
+  title: typography.sectionTitle,
   badge: { fontSize: 13, fontWeight: '600' },
   body: { padding: spacing.md, gap: spacing.md },
   addRow: { flexDirection: 'row', gap: spacing.sm },
-  input: { flex: 1, borderWidth: 2, borderRadius: 10, padding: spacing.sm, fontSize: 16 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', marginTop: spacing.sm },
+  input: {
+    flex: 1,
+    borderWidth: 2,
+    borderRadius: radius.buttonSmall,
+    padding: spacing.sm,
+    fontSize: 16,
+  },
+  sectionTitle: { ...typography.subtitle, marginTop: spacing.sm },
   list: { gap: spacing.sm },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: radius.buttonSmall,
     padding: spacing.sm,
   },
   rowImage: { width: 48, height: 48 },
   rowImageEmpty: {
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: radius.buttonSmall,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowInput: { flex: 1, borderWidth: 1, borderRadius: 8, padding: spacing.sm, fontSize: 16 },
+  rowInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: radius.buttonSmall,
+    padding: spacing.sm,
+    fontSize: 16,
+  },
+  // El toggle de aviso no es un Button: se anuncia como switch, con su estado
+  // marcado, y eso es lo que hace que el lector de pantalla diga si el
+  // pictograma avisa o no en vez de leerlo como un botón cualquiera.
   rowButton: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: radius.buttonSmall,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-  },
-  empty: { fontSize: 15, textAlign: 'center', padding: spacing.lg },
-  primary: {
-    borderRadius: 10,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    minHeight: touchTarget.minHeight,
     justifyContent: 'center',
   },
-  primaryText: { color: '#FFFFFF', fontWeight: '700' },
-  secondary: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  error: { fontSize: 17, textAlign: 'center', paddingHorizontal: spacing.lg },
+  empty: { ...typography.body, textAlign: 'center', padding: spacing.lg },
+  error: { ...typography.subtitle, textAlign: 'center', paddingHorizontal: spacing.lg },
 });

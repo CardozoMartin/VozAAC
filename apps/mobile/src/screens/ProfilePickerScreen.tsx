@@ -13,7 +13,8 @@ import {
 import { INVITE_CODE } from '@vozaac/shared';
 import type { UserProfile } from '@vozaac/shared';
 import { api } from '../api/client';
-import { paletteFor, spacing } from '../theme';
+import { codeTypography, maxFormWidth, paletteFor, radius, spacing, typography } from '../theme';
+import { Button } from '../components/ui';
 
 interface Props {
   token: string;
@@ -129,9 +130,7 @@ export function ProfilePickerScreen({ token, onSelect, onLogout }: Props) {
     return (
       <View style={[styles.centered, { backgroundColor: palette.background }]}>
         <Text style={[styles.error, { color: palette.danger }]}>{error}</Text>
-        <Pressable onPress={onLogout} style={[styles.logout, { borderColor: palette.border }]}>
-          <Text style={{ color: palette.text }}>Salir</Text>
-        </Pressable>
+        <Button label="Salir" variant="secondary" palette={palette} onPress={onLogout} />
       </View>
     );
   }
@@ -187,34 +186,29 @@ export function ProfilePickerScreen({ token, onSelect, onLogout }: Props) {
       )}
 
       <View style={styles.footer}>
-        <Pressable
+        <Button
           testID="button-add-profile"
-          accessibilityRole="button"
+          label="Agregar perfil"
           accessibilityLabel="Agregar un perfil"
+          palette={palette}
           onPress={() => setAdding(true)}
-          style={[styles.addButton, { backgroundColor: palette.accent }]}
-        >
-          <Text style={styles.addButtonText}>Agregar perfil</Text>
-        </Pressable>
+        />
 
-        <Pressable
+        <Button
           testID="button-open-invite"
-          accessibilityRole="button"
-          accessibilityLabel="Tengo una invitación"
+          label="Tengo una invitación"
+          variant="secondary"
+          palette={palette}
           onPress={() => setRedeeming(true)}
-          style={[styles.logout, { borderColor: palette.border }]}
-        >
-          <Text style={{ color: palette.textMuted }}>Tengo una invitación</Text>
-        </Pressable>
+        />
 
-        <Pressable
+        <Button
           testID="button-logout"
-          accessibilityRole="button"
+          label="Cerrar sesión"
+          variant="secondary"
+          palette={palette}
           onPress={onLogout}
-          style={[styles.logout, { borderColor: palette.border }]}
-        >
-          <Text style={{ color: palette.textMuted }}>Cerrar sesión</Text>
-        </Pressable>
+        />
       </View>
 
       <Modal visible={adding} transparent animationType="fade" onRequestClose={closeAdd}>
@@ -245,35 +239,24 @@ export function ProfilePickerScreen({ token, onSelect, onLogout }: Props) {
             )}
 
             <View style={styles.dialogActions}>
-              <Pressable
+              <Button
                 testID="button-cancel-profile"
-                accessibilityRole="button"
+                label="Cancelar"
+                variant="secondary"
+                palette={palette}
                 onPress={closeAdd}
-                style={[styles.dialogButton, { borderColor: palette.border, borderWidth: 1 }]}
-              >
-                <Text style={{ color: palette.text }}>Cancelar</Text>
-              </Pressable>
+                style={styles.dialogButton}
+              />
 
-              <Pressable
+              <Button
                 testID="button-create-profile"
-                accessibilityRole="button"
-                accessibilityState={{ disabled: !newName.trim() || creating }}
-                disabled={!newName.trim() || creating}
+                label="Crear"
+                palette={palette}
+                disabled={!newName.trim()}
+                loading={creating}
                 onPress={() => void handleCreate()}
-                style={[
-                  styles.dialogButton,
-                  {
-                    backgroundColor: palette.accent,
-                    opacity: !newName.trim() || creating ? 0.5 : 1,
-                  },
-                ]}
-              >
-                {creating ? (
-                  <ActivityIndicator color="#FFFFFF" testID="creating-profile" />
-                ) : (
-                  <Text style={styles.addButtonText}>Crear</Text>
-                )}
-              </Pressable>
+                style={styles.dialogButton}
+              />
             </View>
           </View>
         </View>
@@ -319,37 +302,24 @@ export function ProfilePickerScreen({ token, onSelect, onLogout }: Props) {
             )}
 
             <View style={styles.dialogActions}>
-              <Pressable
+              <Button
                 testID="button-cancel-invite"
-                accessibilityRole="button"
+                label="Cancelar"
+                variant="secondary"
+                palette={palette}
                 onPress={closeRedeem}
-                style={[styles.dialogButton, { borderColor: palette.border, borderWidth: 1 }]}
-              >
-                <Text style={{ color: palette.text }}>Cancelar</Text>
-              </Pressable>
+                style={styles.dialogButton}
+              />
 
-              <Pressable
+              <Button
                 testID="button-accept-invite"
-                accessibilityRole="button"
-                accessibilityState={{
-                  disabled: inviteCode.length !== INVITE_CODE.length || accepting,
-                }}
-                disabled={inviteCode.length !== INVITE_CODE.length || accepting}
+                label="Aceptar"
+                palette={palette}
+                disabled={inviteCode.length !== INVITE_CODE.length}
+                loading={accepting}
                 onPress={() => void handleAcceptInvite()}
-                style={[
-                  styles.dialogButton,
-                  {
-                    backgroundColor: palette.accent,
-                    opacity: inviteCode.length !== INVITE_CODE.length || accepting ? 0.5 : 1,
-                  },
-                ]}
-              >
-                {accepting ? (
-                  <ActivityIndicator color="#FFFFFF" testID="accepting-invite" />
-                ) : (
-                  <Text style={styles.addButtonText}>Aceptar</Text>
-                )}
-              </Pressable>
+                style={styles.dialogButton}
+              />
             </View>
           </View>
         </View>
@@ -361,28 +331,32 @@ export function ProfilePickerScreen({ token, onSelect, onLogout }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.lg },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  title: { fontSize: 26, fontWeight: '700', textAlign: 'center', marginBottom: spacing.lg },
+  title: { ...typography.title, textAlign: 'center', marginBottom: spacing.lg },
   list: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.md },
+  // La tarjeta no es un Button: lleva foto, nombre y edad, y el chico/a la
+  // toca por la foto más que por el texto. Es grande a propósito, porque
+  // muchas veces es él mismo quien se elige antes de empezar.
   card: {
     width: 170,
     borderWidth: 2,
-    borderRadius: 16,
+    borderRadius: radius.card,
     padding: spacing.md,
     alignItems: 'center',
     gap: spacing.xs,
   },
-  photo: { width: 110, height: 110, borderRadius: 55 },
+  // El radio sale del tamaño para que siga siendo un círculo si la foto
+  // cambia de medida; antes era 55 fijo, que sólo funcionaba con 110 px.
+  photo: { width: 110, height: 110, borderRadius: radius.pill },
   photoPlaceholder: { borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   initial: { fontSize: 44, fontWeight: '700' },
-  name: { fontSize: 20, fontWeight: '700', textAlign: 'center' },
+  name: { ...typography.sectionTitle, textAlign: 'center' },
+  age: typography.caption,
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: spacing.md,
     marginTop: spacing.lg,
   },
-  addButton: { borderRadius: 12, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-  addButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -390,35 +364,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.lg,
   },
-  dialog: { width: '100%', maxWidth: 420, borderRadius: 16, padding: spacing.lg, gap: spacing.md },
-  dialogTitle: { fontSize: 22, fontWeight: '700' },
-  dialogHint: { fontSize: 14, lineHeight: 20 },
-  input: { borderWidth: 2, borderRadius: 12, padding: spacing.md, fontSize: 18 },
+  dialog: {
+    width: '100%',
+    maxWidth: maxFormWidth,
+    borderRadius: radius.card,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  dialogTitle: typography.sectionTitle,
+  dialogHint: { ...typography.caption, lineHeight: 20 },
+  input: { borderWidth: 2, borderRadius: radius.button, padding: spacing.md, fontSize: 18 },
   codeInput: {
     borderWidth: 2,
-    borderRadius: 12,
+    borderRadius: radius.button,
     padding: spacing.md,
-    fontSize: 28,
-    letterSpacing: 8,
+    ...codeTypography.input,
     textAlign: 'center',
   },
   dialogActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.sm },
-  dialogButton: {
-    borderRadius: 12,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    minWidth: 110,
-    alignItems: 'center',
-  },
-  age: { fontSize: 14 },
-  empty: { fontSize: 16, textAlign: 'center', paddingHorizontal: spacing.lg },
-  error: { fontSize: 17, textAlign: 'center', paddingHorizontal: spacing.lg },
-  logout: {
-    alignSelf: 'center',
-    marginTop: spacing.lg,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
+  // Los dos botones del diálogo miden lo mismo aunque "Crear" sea más corto
+  // que "Cancelar": desparejos, el ojo lee el más ancho como el importante.
+  dialogButton: { minWidth: 110 },
+  empty: { ...typography.body, textAlign: 'center', paddingHorizontal: spacing.lg },
+  error: { ...typography.subtitle, textAlign: 'center', paddingHorizontal: spacing.lg },
 });
