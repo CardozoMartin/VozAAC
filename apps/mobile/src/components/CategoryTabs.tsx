@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import type { Category, ColorMode } from '@vozaac/shared';
-import { categoryColor, spacing, type Palette } from '../theme';
+import { categoryColor, radius, spacing, type Palette } from '../theme';
 
 interface Props {
   categories: Category[];
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderWidth: 3,
-    borderRadius: 12,
+    borderRadius: radius.card,
     minWidth: 110,
     alignItems: 'center',
   },

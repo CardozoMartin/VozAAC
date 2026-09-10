@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import type { ArasaacPictogram } from '@vozaac/shared';
 import { api } from '../api/client';
-import { spacing, type Palette } from '../theme';
+import { radius, spacing, typography, type Palette } from '../theme';
+import { Button } from './ui';
 
 interface Props {
   token: string;
@@ -59,15 +60,12 @@ export function ArasaacPicker({ token, palette, onPick }: Props) {
           returnKeyType="search"
           style={[styles.input, { borderColor: palette.border, color: palette.text }]}
         />
-        <Pressable
+        <Button
           testID="button-arasaac-search"
-          accessibilityRole="button"
-          accessibilityLabel="Buscar"
+          label="Buscar"
+          palette={palette}
           onPress={handleSearch}
-          style={[styles.searchButton, { backgroundColor: palette.accent }]}
-        >
-          <Text style={styles.searchButtonText}>Buscar</Text>
-        </Pressable>
+        />
       </View>
 
       {loading && <ActivityIndicator testID="arasaac-loading" color={palette.accent} />}
@@ -117,19 +115,19 @@ export function ArasaacPicker({ token, palette, onPick }: Props) {
 const styles = StyleSheet.create({
   container: { gap: spacing.sm },
   searchRow: { flexDirection: 'row', gap: spacing.sm },
-  input: { flex: 1, borderWidth: 2, borderRadius: 10, padding: spacing.sm, fontSize: 16 },
-  searchButton: {
-    borderRadius: 10,
-    paddingHorizontal: spacing.md,
-    justifyContent: 'center',
+  input: {
+    flex: 1,
+    borderWidth: 2,
+    borderRadius: radius.buttonSmall,
+    padding: spacing.sm,
+    fontSize: 16,
   },
-  searchButtonText: { color: '#FFFFFF', fontWeight: '700' },
-  message: { fontSize: 15, paddingVertical: spacing.sm },
+  message: { ...typography.body, paddingVertical: spacing.sm },
   results: { flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.xs },
   result: {
     width: 96,
     borderWidth: 2,
-    borderRadius: 10,
+    borderRadius: radius.buttonSmall,
     padding: spacing.xs,
     alignItems: 'center',
   },

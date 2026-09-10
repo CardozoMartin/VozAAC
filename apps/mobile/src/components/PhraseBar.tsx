@@ -1,7 +1,7 @@
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Pictogram } from '@vozaac/shared';
 import type { Palette } from '../theme';
-import { spacing } from '../theme';
+import { radius, spacing } from '../theme';
 import { useLayout } from '../state/useLayout';
 
 interface Props {
@@ -128,7 +128,11 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 13, fontWeight: '600' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginLeft: spacing.sm },
   actionsCompact: { marginLeft: 0, marginTop: spacing.sm, justifyContent: 'space-between' },
-  button: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderRadius: 12 },
+  button: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radius.button,
+  },
   // Apilada, "Hablar" se lleva el ancho sobrante: es el botón que más se toca.
   buttonCompact: { flex: 1, alignItems: 'center' },
   buttonText: { color: '#FFFFFF', fontSize: 20, fontWeight: '700' },
@@ -136,7 +140,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderWidth: 2,
-    borderRadius: 12,
+    borderRadius: radius.button,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { URGENT_ALERT, type Pictogram } from '@vozaac/shared';
 import type { Palette } from '../theme';
-import { spacing } from '../theme';
+import { radius, spacing, typography } from '../theme';
 import { useTremorFilter, type TremorFilterOptions } from '../state/useTremorFilter';
 
 interface Props {
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: spacing.xs,
     borderWidth: 3,
-    borderRadius: 12,
+    borderRadius: radius.card,
     padding: spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
@@ -195,8 +195,7 @@ const styles = StyleSheet.create({
   image: { width: '100%', height: '100%' },
   text: {
     marginTop: spacing.xs,
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.pictogram,
     textAlign: 'center',
   },
 });
