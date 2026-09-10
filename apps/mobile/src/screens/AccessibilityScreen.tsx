@@ -20,7 +20,8 @@ import {
 import { api } from '../api/client';
 import { useSpeech } from '../state/useSpeech';
 import { gridDimensionsFor, useLayout } from '../state/useLayout';
-import { paletteFor, spacing } from '../theme';
+import { paletteFor, radius, spacing, touchTarget, typography } from '../theme';
+import { Button } from '../components/ui';
 
 interface Props {
   token: string;
@@ -163,13 +164,13 @@ export function AccessibilityScreen({ token, userId, onExit }: Props) {
     return (
       <View style={[styles.centered, { backgroundColor: palette.background }]}>
         <Text style={[styles.error, { color: palette.danger }]}>{error}</Text>
-        <Pressable
+        <Button
           testID="button-volver"
+          label="Volver"
+          variant="secondary"
+          palette={palette}
           onPress={onExit}
-          style={[styles.secondary, { borderColor: palette.border }]}
-        >
-          <Text style={{ color: palette.text, textAlign: 'center' }}>Volver</Text>
-        </Pressable>
+        />
       </View>
     );
   }
@@ -349,25 +350,20 @@ export function AccessibilityScreen({ token, userId, onExit }: Props) {
         (next) => void apply({ speechPitch: next }),
       )}
 
-      <Pressable
+      <Button
         testID="button-probar-voz"
-        accessibilityRole="button"
-        accessibilityLabel="Probar la voz"
+        label="Probar la voz"
+        palette={palette}
         onPress={() => speak('Hola, quiero jugar')}
-        style={[styles.primary, { backgroundColor: palette.accent }]}
-      >
-        <Text style={styles.primaryText}>Probar la voz</Text>
-      </Pressable>
+      />
 
-      <Pressable
+      <Button
         testID="button-volver"
-        accessibilityRole="button"
-        accessibilityLabel="Volver"
+        label="Volver"
+        variant="secondary"
+        palette={palette}
         onPress={onExit}
-        style={[styles.secondary, { borderColor: palette.border }]}
-      >
-        <Text style={{ color: palette.text, textAlign: 'center' }}>Volver</Text>
-      </Pressable>
+      />
     </ScrollView>
   );
 }
@@ -376,23 +372,27 @@ const styles = StyleSheet.create({
   container: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.lg },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  title: { fontSize: 24, fontWeight: '700' },
-  section: { fontSize: 18, fontWeight: '700', marginTop: spacing.md },
-  hint: { fontSize: 13, lineHeight: 18 },
+  title: typography.title,
+  section: { ...typography.subtitle, marginTop: spacing.md },
+  hint: { ...typography.caption, lineHeight: 18 },
   options: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
+  // Las opciones de grilla y paleta no son Buttons: se anuncian como radio
+  // con su estado seleccionado, que es lo que dice cuál está activa.
   option: {
-    borderRadius: 10,
+    borderRadius: radius.buttonSmall,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     alignItems: 'center',
+    justifyContent: 'center',
     minWidth: 96,
+    minHeight: touchTarget.minHeight,
   },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: radius.buttonSmall,
     padding: spacing.sm,
     marginTop: spacing.xs,
   },
@@ -403,31 +403,20 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     gap: spacing.sm,
   },
-  stepperLabel: { fontSize: 15, flexShrink: 1 },
+  stepperLabel: { ...typography.body, flexShrink: 1 },
   stepperControls: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  // El stepper es un cuadrado de 44: lo usa un adulto, muchas veces con el
+  // chico/a encima y sin poder mirar con atención.
   stepButton: {
     borderWidth: 1,
-    borderRadius: 8,
-    width: 44,
-    height: 44,
+    borderRadius: radius.buttonSmall,
+    width: touchTarget.minHeight,
+    height: touchTarget.minHeight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepButtonText: { fontSize: 22, fontWeight: '700' },
-  stepperValue: { fontSize: 16, fontWeight: '600', minWidth: 72, textAlign: 'center' },
-  primary: {
-    borderRadius: 10,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    marginTop: spacing.md,
-  },
-  primaryText: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
-  secondary: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: spacing.md,
-    marginTop: spacing.sm,
-  },
-  error: { fontSize: 17, textAlign: 'center', paddingHorizontal: spacing.lg },
-  inlineError: { fontSize: 14 },
+  stepperValue: { ...typography.pictogram, minWidth: 72, textAlign: 'center' },
+  inlineError: typography.caption,
+  error: { ...typography.subtitle, textAlign: 'center', paddingHorizontal: spacing.lg },
 });

@@ -1,18 +1,10 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LINK_CODE } from '@vozaac/shared';
 import type { DeviceAuthResponse } from '@vozaac/shared';
 import { api } from '../api/client';
-import { paletteFor, spacing } from '../theme';
+import { codeTypography, paletteFor, radius, spacing, typography } from '../theme';
+import { Button } from '../components/ui';
 
 interface Props {
   onLinked: (respuesta: DeviceAuthResponse) => void;
@@ -71,8 +63,6 @@ export function LinkDeviceScreen({ onLinked, onCancel }: Props) {
     );
   }
 
-  const canSubmit = code.length === LINK_CODE.length && !linking;
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -114,32 +104,24 @@ export function LinkDeviceScreen({ onLinked, onCancel }: Props) {
       )}
 
       <View style={styles.actions}>
-        <Pressable
+        <Button
           testID="button-link-cancel"
-          accessibilityRole="button"
+          label="Volver"
+          variant="secondary"
+          palette={palette}
           onPress={onCancel}
-          style={[styles.secondary, { borderColor: palette.border }]}
-        >
-          <Text style={{ color: palette.textMuted }}>Volver</Text>
-        </Pressable>
+          style={styles.action}
+        />
 
-        <Pressable
+        <Button
           testID="button-link-submit"
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canSubmit }}
-          disabled={!canSubmit}
+          label="Vincular"
+          palette={palette}
+          disabled={code.length !== LINK_CODE.length}
+          loading={linking}
           onPress={handleSubmit}
-          style={[
-            styles.primary,
-            { backgroundColor: palette.accent, opacity: canSubmit ? 1 : 0.5 },
-          ]}
-        >
-          {linking ? (
-            <ActivityIndicator color="#FFFFFF" testID="linking" />
-          ) : (
-            <Text style={styles.primaryText}>Vincular</Text>
-          )}
-        </Pressable>
+          style={styles.action}
+        />
       </View>
     </KeyboardAvoidingView>
   );
@@ -153,40 +135,24 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.lg,
   },
-  title: { fontSize: 28, fontWeight: '800', textAlign: 'center' },
-  subtitle: { fontSize: 16, textAlign: 'center', maxWidth: 380 },
+  title: { ...typography.title, textAlign: 'center' },
+  subtitle: { ...typography.body, textAlign: 'center', maxWidth: 380 },
   codeInput: {
     borderWidth: 2,
-    borderRadius: 12,
+    borderRadius: radius.button,
     padding: spacing.md,
-    fontSize: 32,
-    letterSpacing: 10,
+    ...codeTypography.input,
     textAlign: 'center',
     width: 280,
   },
   nameInput: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: radius.button,
     padding: spacing.md,
     fontSize: 16,
     width: 280,
   },
-  error: { fontSize: 15, textAlign: 'center' },
+  error: { ...typography.body, textAlign: 'center' },
   actions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
-  secondary: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    justifyContent: 'center',
-  },
-  primary: {
-    borderRadius: 12,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    minWidth: 130,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryText: { color: '#FFFFFF', fontSize: 17, fontWeight: '700' },
+  action: { minWidth: 130 },
 });

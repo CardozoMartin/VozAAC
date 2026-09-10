@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { GridSize, type AccessibilitySettings, type Board, type Pictogram } from '@vozaac/shared';
 import { api } from '../api/client';
 import { usePhrase } from '../state/usePhrase';
@@ -11,7 +11,8 @@ import { useLayout } from '../state/useLayout';
 import { PhraseBar } from '../components/PhraseBar';
 import { CategoryTabs } from '../components/CategoryTabs';
 import { PictogramGrid } from '../components/PictogramGrid';
-import { categoryColor, paletteFor, spacing } from '../theme';
+import { categoryColor, paletteFor, spacing, touchTarget, typography } from '../theme';
+import { Button } from '../components/ui';
 
 interface Props {
   token: string;
@@ -115,11 +116,7 @@ export function CommunicatorScreen({
     return (
       <View style={[styles.centered, { backgroundColor: palette.background }]}>
         <Text style={[styles.errorText, { color: palette.danger }]}>{error}</Text>
-        {onExit && (
-          <Pressable onPress={onExit} style={[styles.exitButton, { borderColor: palette.border }]}>
-            <Text style={{ color: palette.text }}>Volver</Text>
-          </Pressable>
-        )}
+        {onExit && <Button label="Volver" variant="secondary" palette={palette} onPress={onExit} />}
       </View>
     );
   }
@@ -188,43 +185,38 @@ export function CommunicatorScreen({
         </Text>
         <View style={styles.footerActions}>
           {onOpenAlerts && (
-            <Pressable
+            <Button
               testID="button-open-alerts"
-              accessibilityRole="button"
-              accessibilityLabel="Avisos"
+              label="Avisos"
+              variant="secondary"
+              palette={palette}
               onPress={onOpenAlerts}
-              style={[styles.exitButton, { borderColor: palette.border }]}
-            >
-              <Text style={{ color: palette.textMuted }}>Avisos</Text>
-            </Pressable>
+              style={styles.footerButton}
+            />
           )}
           {onOpenEditor && (
-            <Pressable
+            /* En celular vertical no entran las dos etiquetas completas, y
+               acortar la del editor es preferible a que se corten las dos. */
+            <Button
               testID="button-open-editor"
-              accessibilityRole="button"
+              label={isCompact ? 'Terapeuta' : 'Modo terapeuta'}
               accessibilityLabel="Modo terapeuta"
+              variant="secondary"
+              palette={palette}
               onPress={onOpenEditor}
-              style={[styles.exitButton, { borderColor: palette.border }]}
-            >
-              {/* En celular vertical no entran las dos etiquetas completas, y
-                  acortar la del editor es preferible a que se corten las dos. */}
-              <Text style={{ color: palette.textMuted }}>
-                {isCompact ? 'Terapeuta' : 'Modo terapeuta'}
-              </Text>
-            </Pressable>
+              style={styles.footerButton}
+            />
           )}
           {onExit && (
-            <Pressable
+            <Button
               testID="button-exit"
-              accessibilityRole="button"
+              label={isCompact ? 'Perfil' : 'Cambiar perfil'}
               accessibilityLabel="Cambiar de perfil"
+              variant="secondary"
+              palette={palette}
               onPress={onExit}
-              style={[styles.exitButton, { borderColor: palette.border }]}
-            >
-              <Text style={{ color: palette.textMuted }}>
-                {isCompact ? 'Perfil' : 'Cambiar perfil'}
-              </Text>
-            </Pressable>
+              style={styles.footerButton}
+            />
           )}
         </View>
       </View>
@@ -241,7 +233,7 @@ const styles = StyleSheet.create({
   alertText: { color: '#FFFFFF', fontSize: 20, fontWeight: '700', textAlign: 'center' },
   container: { flex: 1 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  errorText: { fontSize: 18, textAlign: 'center', paddingHorizontal: spacing.lg },
+  errorText: { ...typography.subtitle, textAlign: 'center', paddingHorizontal: spacing.lg },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -250,12 +242,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
-  profileName: { fontSize: 14, flexShrink: 1, marginRight: spacing.sm },
+  profileName: { ...typography.caption, flexShrink: 1, marginRight: spacing.sm },
   footerActions: { flexDirection: 'row', gap: spacing.sm },
-  exitButton: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
+  // Los botones del pie son para el adulto y no tienen que competir con la
+  // grilla, así que van más ajustados que un botón normal, sin bajar del
+  // área táctil mínima. El contraste con la grilla lo da el tamaño, no el
+  // color: un botón del pie sigue siendo legible, sólo que no llama.
+  footerButton: { paddingVertical: spacing.xs, minHeight: touchTarget.minHeight },
 });

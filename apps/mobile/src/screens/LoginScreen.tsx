@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,7 +10,8 @@ import {
   View,
 } from 'react-native';
 import { api } from '../api/client';
-import { paletteFor, spacing } from '../theme';
+import { maxFormWidth, paletteFor, radius, spacing, typography } from '../theme';
+import { Button } from '../components/ui';
 
 interface Props {
   onLoggedIn: (token: string) => void;
@@ -143,35 +143,22 @@ export function LoginScreen({ onLoggedIn, onLinkDevice }: Props) {
             </Text>
           )}
 
-          <Pressable
+          <Button
             testID="button-login"
-            accessibilityRole="button"
-            accessibilityState={{ disabled: !canSubmit }}
+            label={isRegistering ? 'Crear cuenta' : 'Entrar'}
+            palette={palette}
             disabled={!canSubmit}
+            loading={loading}
             onPress={handleSubmit}
-            style={[
-              styles.button,
-              { backgroundColor: palette.accent, opacity: canSubmit ? 1 : 0.5 },
-            ]}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" testID="login-loading" />
-            ) : (
-              <Text style={styles.buttonText}>{isRegistering ? 'Crear cuenta' : 'Entrar'}</Text>
-            )}
-          </Pressable>
+          />
 
-          <Pressable
+          <Button
             testID="button-toggle-mode"
-            accessibilityRole="button"
-            accessibilityLabel={isRegistering ? 'Ya tengo cuenta' : 'Crear una cuenta nueva'}
+            label={isRegistering ? 'Ya tengo cuenta' : 'Crear una cuenta nueva'}
+            variant="link"
+            palette={palette}
             onPress={toggleMode}
-            style={styles.link}
-          >
-            <Text style={[styles.linkText, { color: palette.accent }]}>
-              {isRegistering ? 'Ya tengo cuenta' : 'Crear una cuenta nueva'}
-            </Text>
-          </Pressable>
+          />
 
           {/*
             Salida para el dispositivo del chico/a y el del otro responsable:
@@ -197,14 +184,17 @@ export function LoginScreen({ onLoggedIn, onLinkDevice }: Props) {
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
-  form: { width: '100%', maxWidth: 420, gap: spacing.md },
+  form: { width: '100%', maxWidth: maxFormWidth, gap: spacing.md },
+  // El título de la app es más grande que el de una pantalla común: es lo
+  // primero que se ve al abrirla y no compite con nada.
   title: { fontSize: 40, fontWeight: '800', textAlign: 'center' },
-  subtitle: { fontSize: 16, textAlign: 'center', marginBottom: spacing.md },
-  input: { borderWidth: 2, borderRadius: 12, padding: spacing.md, fontSize: 18 },
-  hint: { fontSize: 13, textAlign: 'center' },
-  error: { fontSize: 15, textAlign: 'center' },
-  button: { borderRadius: 12, paddingVertical: spacing.md, alignItems: 'center' },
-  buttonText: { color: '#FFFFFF', fontSize: 20, fontWeight: '700' },
+  subtitle: { ...typography.body, textAlign: 'center', marginBottom: spacing.md },
+  input: { borderWidth: 2, borderRadius: radius.button, padding: spacing.md, fontSize: 18 },
+  hint: { ...typography.caption, textAlign: 'center' },
+  error: { ...typography.body, textAlign: 'center' },
+  // La salida por código queda deliberadamente más apagada que el enlace de
+  // arriba: es para el dispositivo del chico/a, no para quien viene a entrar
+  // con su cuenta.
   link: { paddingVertical: spacing.sm, alignItems: 'center' },
-  linkText: { fontSize: 16, fontWeight: '600' },
+  linkText: { ...typography.body, fontWeight: '600' },
 });

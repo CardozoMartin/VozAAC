@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { THERAPIST_PIN } from '@vozaac/shared';
 import { api } from '../api/client';
-import { paletteFor, spacing } from '../theme';
+import { codeTypography, paletteFor, radius, spacing, typography } from '../theme';
+import { Button } from '../components/ui';
 
 interface Props {
   token: string;
@@ -41,8 +42,6 @@ export function PinGateScreen({ token, onUnlocked, onCancel }: Props) {
     }
   }
 
-  const canSubmit = pin.length === THERAPIST_PIN.length && !checking;
-
   return (
     <View style={[styles.container, { backgroundColor: palette.background }]}>
       <Text style={[styles.title, { color: palette.text }]}>Modo terapeuta</Text>
@@ -68,32 +67,24 @@ export function PinGateScreen({ token, onUnlocked, onCancel }: Props) {
       )}
 
       <View style={styles.actions}>
-        <Pressable
+        <Button
           testID="button-pin-cancel"
-          accessibilityRole="button"
+          label="Cancelar"
+          variant="secondary"
+          palette={palette}
           onPress={onCancel}
-          style={[styles.secondary, { borderColor: palette.border }]}
-        >
-          <Text style={{ color: palette.textMuted }}>Cancelar</Text>
-        </Pressable>
+          style={styles.action}
+        />
 
-        <Pressable
+        <Button
           testID="button-pin-submit"
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canSubmit }}
-          disabled={!canSubmit}
+          label="Entrar"
+          palette={palette}
+          disabled={pin.length !== THERAPIST_PIN.length}
+          loading={checking}
           onPress={handleSubmit}
-          style={[
-            styles.primary,
-            { backgroundColor: palette.accent, opacity: canSubmit ? 1 : 0.5 },
-          ]}
-        >
-          {checking ? (
-            <ActivityIndicator color="#FFFFFF" testID="pin-checking" />
-          ) : (
-            <Text style={styles.primaryText}>Entrar</Text>
-          )}
-        </Pressable>
+          style={styles.action}
+        />
       </View>
     </View>
   );
@@ -101,25 +92,19 @@ export function PinGateScreen({ token, onUnlocked, onCancel }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  title: { fontSize: 30, fontWeight: '800' },
-  subtitle: { fontSize: 16 },
+  title: typography.title,
+  subtitle: typography.body,
   input: {
     borderWidth: 2,
-    borderRadius: 12,
+    borderRadius: radius.button,
     padding: spacing.md,
-    fontSize: 32,
-    letterSpacing: 12,
+    ...codeTypography.input,
     textAlign: 'center',
     width: 220,
   },
-  error: { fontSize: 15 },
+  error: typography.body,
   actions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
-  secondary: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  primary: { borderRadius: 12, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-  primaryText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
+  // Los dos botones miden lo mismo: "Entrar" es más corto que "Cancelar", y
+  // desparejos el ojo leería el de cancelar como la acción principal.
+  action: { minWidth: 130 },
 });
