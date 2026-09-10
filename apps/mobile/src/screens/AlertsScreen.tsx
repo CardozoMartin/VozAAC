@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { URGENT_ALERT, type Alert } from '@vozaac/shared';
 import { api } from '../api/client';
-import { paletteFor, spacing } from '../theme';
+import { paletteFor, radius, spacing, touchTarget, typography } from '../theme';
 
 interface Props {
   token: string;
@@ -196,9 +196,9 @@ function formatearMomento(iso: string): string {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.md, gap: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { fontSize: 26, fontWeight: '800' },
+  title: typography.title,
   row: {
-    borderRadius: 12,
+    borderRadius: radius.card,
     padding: spacing.md,
     marginBottom: spacing.sm,
     flexDirection: 'row',
@@ -207,15 +207,25 @@ const styles = StyleSheet.create({
   },
   image: { width: 56, height: 56 },
   info: { flex: 1, gap: spacing.xs },
-  text: { fontSize: 20, fontWeight: '700' },
-  meta: { fontSize: 14 },
-  ack: { borderRadius: 10, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  ackText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
-  error: { fontSize: 15 },
-  secondary: {
-    borderWidth: 1,
-    borderRadius: 12,
+  // El texto del pictograma es lo que el responsable lee de un vistazo a las
+  // 3 AM, así que va un escalón por encima del cuerpo del resto de la fila.
+  text: typography.sectionTitle,
+  meta: typography.caption,
+  ack: {
+    borderRadius: radius.buttonSmall,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    minHeight: touchTarget.minHeight,
+    justifyContent: 'center',
+  },
+  ackText: { color: '#FFFFFF', ...typography.button },
+  error: typography.body,
+  secondary: {
+    borderWidth: 1,
+    borderRadius: radius.button,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    minHeight: touchTarget.minHeight,
+    justifyContent: 'center',
   },
 });
