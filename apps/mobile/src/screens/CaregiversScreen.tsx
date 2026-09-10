@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -12,7 +11,8 @@ import {
 import { INVITE_CODE } from '@vozaac/shared';
 import type { InviteCodeResponse, ProfileCaregiverInfo } from '@vozaac/shared';
 import { api } from '../api/client';
-import { paletteFor, spacing } from '../theme';
+import { paletteFor, radius, spacing, typography } from '../theme';
+import { Button, CodeDisplay } from '../components/ui';
 
 interface Props {
   token: string;
@@ -111,14 +111,13 @@ export function CaregiversScreen({ token, userId, profileName, onExit }: Props) 
     <View style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: palette.text }]}>Responsables</Text>
-        <Pressable
+        <Button
           testID="button-caregivers-exit"
-          accessibilityRole="button"
+          label="Volver"
+          variant="secondary"
+          palette={palette}
           onPress={onExit}
-          style={[styles.secondary, { borderColor: palette.border }]}
-        >
-          <Text style={{ color: palette.textMuted }}>Volver</Text>
-        </Pressable>
+        />
       </View>
 
       <Text style={[styles.subtitle, { color: palette.textMuted }]}>
@@ -126,34 +125,24 @@ export function CaregiversScreen({ token, userId, profileName, onExit }: Props) 
       </Text>
 
       {invite ? (
-        <View
-          testID="invite-panel"
-          style={[
-            styles.invitePanel,
-            { backgroundColor: palette.surface, borderColor: palette.border },
-          ]}
-        >
-          <Text style={[styles.inviteLabel, { color: palette.textMuted }]}>
-            Pasale este código a quien quieras sumar
-          </Text>
-          <Text testID="invite-code-value" style={[styles.code, { color: palette.text }]}>
-            {invite.code}
-          </Text>
-          <Text style={[styles.inviteHint, { color: palette.textMuted }]}>
-            Tiene que crear su cuenta en la app y escribirlo. Vence en {INVITE_CODE.expiresInHours}{' '}
-            horas y se usa una sola vez.
-          </Text>
-          <Pressable
+        <View style={styles.inviteSection}>
+          <CodeDisplay
+            testID="invite-panel"
+            valueTestID="invite-code-value"
+            code={invite.code}
+            label="Pasale este código a quien quieras sumar"
+            hint={`Tiene que crear su cuenta en la app y escribirlo. Vence en ${INVITE_CODE.expiresInHours} horas y se usa una sola vez.`}
+            palette={palette}
+          />
+          <Button
             testID="button-invite-done"
-            accessibilityRole="button"
+            label="Listo"
+            palette={palette}
             onPress={() => {
               setInvite(null);
               void cargar();
             }}
-            style={[styles.primary, { backgroundColor: palette.accent }]}
-          >
-            <Text style={styles.primaryText}>Listo</Text>
-          </Pressable>
+          />
         </View>
       ) : (
         <View style={[styles.inviteForm, { borderColor: palette.border }]}>
@@ -168,23 +157,13 @@ export function CaregiversScreen({ token, userId, profileName, onExit }: Props) 
             maxLength={60}
             style={[styles.input, { borderColor: palette.border, color: palette.text }]}
           />
-          <Pressable
+          <Button
             testID="button-invite"
-            accessibilityRole="button"
-            accessibilityState={{ disabled: inviting }}
-            disabled={inviting}
+            label="Generar invitación"
+            palette={palette}
+            loading={inviting}
             onPress={() => void invitar()}
-            style={[
-              styles.primary,
-              { backgroundColor: palette.accent, opacity: inviting ? 0.5 : 1 },
-            ]}
-          >
-            {inviting ? (
-              <ActivityIndicator color="#FFFFFF" testID="inviting" />
-            ) : (
-              <Text style={styles.primaryText}>Generar invitación</Text>
-            )}
-          </Pressable>
+          />
         </View>
       )}
 
@@ -220,17 +199,16 @@ export function CaregiversScreen({ token, userId, profileName, onExit }: Props) 
                 quedaría sin nadie que pueda verlo, y la API lo rechaza igual.
               */}
               {caregivers.length > 1 && (
-                <Pressable
+                <Button
                   testID={`button-remove-${item.caregiverId}`}
-                  accessibilityRole="button"
+                  label={item.isSelf ? 'Salir' : 'Quitar'}
                   accessibilityLabel={
                     item.isSelf ? 'Dejar de ser responsable' : `Quitar a ${item.fullName}`
                   }
+                  variant="danger"
+                  palette={palette}
                   onPress={() => confirmarQuitar(item)}
-                  style={[styles.remove, { borderColor: palette.danger }]}
-                >
-                  <Text style={{ color: palette.danger }}>{item.isSelf ? 'Salir' : 'Quitar'}</Text>
-                </Pressable>
+                />
               )}
             </View>
           )}
@@ -243,24 +221,20 @@ export function CaregiversScreen({ token, userId, profileName, onExit }: Props) 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.md, gap: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { fontSize: 26, fontWeight: '800' },
-  subtitle: { fontSize: 15 },
-  sectionTitle: { fontSize: 17, fontWeight: '700' },
-  inviteForm: { borderWidth: 1, borderRadius: 12, padding: spacing.md, gap: spacing.sm },
-  input: { borderWidth: 1, borderRadius: 10, padding: spacing.md, fontSize: 16 },
-  invitePanel: {
+  title: typography.title,
+  subtitle: typography.body,
+  sectionTitle: typography.subtitle,
+  inviteForm: {
     borderWidth: 1,
-    borderRadius: 12,
-    padding: spacing.lg,
-    alignItems: 'center',
+    borderRadius: radius.card,
+    padding: spacing.md,
     gap: spacing.sm,
   },
-  inviteLabel: { fontSize: 15, textAlign: 'center' },
-  code: { fontSize: 40, fontWeight: '800', letterSpacing: 8 },
-  inviteHint: { fontSize: 14, textAlign: 'center' },
+  inviteSection: { gap: spacing.md },
+  input: { borderWidth: 1, borderRadius: radius.buttonSmall, padding: spacing.md, fontSize: 16 },
   row: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: radius.card,
     padding: spacing.md,
     marginBottom: spacing.sm,
     flexDirection: 'row',
@@ -269,26 +243,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   info: { flex: 1, gap: spacing.xs },
-  name: { fontSize: 17, fontWeight: '600' },
-  meta: { fontSize: 14 },
-  remove: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  error: { fontSize: 15 },
-  secondary: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  primary: {
-    borderRadius: 12,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-  primaryText: { color: '#FFFFFF', fontSize: 17, fontWeight: '700' },
+  name: typography.subtitle,
+  meta: typography.caption,
+  error: typography.body,
 });

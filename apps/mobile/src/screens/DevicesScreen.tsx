@@ -11,7 +11,8 @@ import {
 import { DeviceKind, LINK_CODE } from '@vozaac/shared';
 import type { LinkCodeResponse, LinkedDevice, UserProfile } from '@vozaac/shared';
 import { api } from '../api/client';
-import { paletteFor, spacing } from '../theme';
+import { paletteFor, radius, spacing, touchTarget, typography } from '../theme';
+import { Button, CodeDisplay } from '../components/ui';
 
 interface Props {
   token: string;
@@ -98,44 +99,34 @@ export function DevicesScreen({ token, profiles, onExit }: Props) {
     <View style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: palette.text }]}>Dispositivos</Text>
-        <Pressable
+        <Button
           testID="button-devices-exit"
-          accessibilityRole="button"
+          label="Volver"
+          variant="secondary"
+          palette={palette}
           onPress={onExit}
-          style={[styles.secondary, { borderColor: palette.border }]}
-        >
-          <Text style={{ color: palette.textMuted }}>Volver</Text>
-        </Pressable>
+        />
       </View>
 
       {codigo ? (
-        <View
-          testID="link-code-panel"
-          style={[
-            styles.codePanel,
-            { backgroundColor: palette.surface, borderColor: palette.border },
-          ]}
-        >
-          <Text style={[styles.codeLabel, { color: palette.textMuted }]}>
-            Escribí este código en el otro dispositivo
-          </Text>
-          <Text testID="link-code-value" style={[styles.code, { color: palette.text }]}>
-            {codigo.code}
-          </Text>
-          <Text style={[styles.codeHint, { color: palette.textMuted }]}>
-            Vence en {LINK_CODE.expiresInMinutes} minutos y se usa una sola vez.
-          </Text>
-          <Pressable
+        <View style={styles.codeSection}>
+          <CodeDisplay
+            testID="link-code-panel"
+            valueTestID="link-code-value"
+            code={codigo.code}
+            label="Escribí este código en el otro dispositivo"
+            hint={`Vence en ${LINK_CODE.expiresInMinutes} minutos y se usa una sola vez.`}
+            palette={palette}
+          />
+          <Button
             testID="button-code-done"
-            accessibilityRole="button"
+            label="Listo"
+            palette={palette}
             onPress={() => {
               setCodigo(null);
               void cargar();
             }}
-            style={[styles.primary, { backgroundColor: palette.accent }]}
-          >
-            <Text style={styles.primaryText}>Listo</Text>
-          </Pressable>
+          />
         </View>
       ) : (
         <View style={styles.generators}>
@@ -211,15 +202,14 @@ export function DevicesScreen({ token, profiles, onExit }: Props) {
                   {nombreDePerfil(item.userId)}
                 </Text>
               </View>
-              <Pressable
+              <Button
                 testID={`button-revoke-${item.id}`}
-                accessibilityRole="button"
+                label="Desvincular"
                 accessibilityLabel={`Desvincular ${item.name}`}
+                variant="danger"
+                palette={palette}
                 onPress={() => confirmarRevocar(item)}
-                style={[styles.revoke, { borderColor: palette.danger }]}
-              >
-                <Text style={{ color: palette.danger }}>Desvincular</Text>
-              </Pressable>
+              />
             </View>
           )}
         />
@@ -231,25 +221,25 @@ export function DevicesScreen({ token, profiles, onExit }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.md, gap: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { fontSize: 26, fontWeight: '800' },
-  sectionTitle: { fontSize: 18, fontWeight: '700' },
+  title: typography.title,
+  sectionTitle: typography.subtitle,
   generators: { gap: spacing.sm },
-  generatorRow: { borderWidth: 1, borderRadius: 12, padding: spacing.md, gap: spacing.xs },
-  generatorText: { fontSize: 17, fontWeight: '600' },
-  generatorHint: { fontSize: 14 },
-  codePanel: {
+  codeSection: { gap: spacing.md },
+  // La fila del generador no usa Button porque lleva dos líneas —qué es y a
+  // quién le sirve—, y Button es de una etiqueta sola a propósito.
+  generatorRow: {
     borderWidth: 1,
-    borderRadius: 12,
-    padding: spacing.lg,
-    alignItems: 'center',
-    gap: spacing.sm,
+    borderRadius: radius.card,
+    padding: spacing.md,
+    gap: spacing.xs,
+    minHeight: touchTarget.minHeight,
+    justifyContent: 'center',
   },
-  codeLabel: { fontSize: 15, textAlign: 'center' },
-  code: { fontSize: 40, fontWeight: '800', letterSpacing: 8 },
-  codeHint: { fontSize: 14, textAlign: 'center' },
+  generatorText: typography.subtitle,
+  generatorHint: typography.caption,
   deviceRow: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: radius.card,
     padding: spacing.md,
     marginBottom: spacing.sm,
     flexDirection: 'row',
@@ -258,27 +248,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   deviceInfo: { flex: 1, gap: spacing.xs },
-  deviceName: { fontSize: 17, fontWeight: '600' },
-  deviceMeta: { fontSize: 14 },
-  revoke: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  error: { fontSize: 15 },
-  secondary: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  primary: {
-    borderRadius: 12,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    marginTop: spacing.sm,
-  },
-  primaryText: { color: '#FFFFFF', fontSize: 17, fontWeight: '700' },
+  deviceName: typography.subtitle,
+  deviceMeta: typography.caption,
+  error: typography.body,
 });
