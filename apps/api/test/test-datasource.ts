@@ -1,20 +1,30 @@
 import { DataSource } from 'typeorm';
 import { Caregiver } from '../src/caregivers/entities/caregiver.entity';
 import { User } from '../src/users/entities/user.entity';
+import { ProfileCaregiver } from '../src/users/entities/profile-caregiver.entity';
+import { CaregiverInvite } from '../src/users/entities/caregiver-invite.entity';
 import { Board } from '../src/boards/entities/board.entity';
 import { Category } from '../src/categories/entities/category.entity';
 import { Pictogram } from '../src/pictograms/entities/pictogram.entity';
 import { AccessibilitySettings } from '../src/accessibility/entities/accessibility-settings.entity';
 import { UsageLog } from '../src/usage/entities/usage-log.entity';
+import { DeviceSession } from '../src/devices/entities/device-session.entity';
+import { LinkCode } from '../src/devices/entities/link-code.entity';
+import { Alert } from '../src/alerts/entities/alert.entity';
 
 export const TEST_ENTITIES = [
   Caregiver,
   User,
+  ProfileCaregiver,
+  CaregiverInvite,
   Board,
   Category,
   Pictogram,
   AccessibilitySettings,
   UsageLog,
+  DeviceSession,
+  LinkCode,
+  Alert,
 ];
 
 /**

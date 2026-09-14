@@ -61,3 +61,18 @@ export enum UsageEventType {
   PHRASE_SPOKEN = 'phrase_spoken',
   PHRASE_CLEARED = 'phrase_cleared',
 }
+
+/**
+ * Para qué se vincula un dispositivo (Módulo 9).
+ *
+ * CHILD es el celular o tablet del chico/a: abre directo en el comunicador y
+ * su sesión no se cierra nunca. CAREGIVER es el de otro responsable —el otro
+ * padre, una abuela, la maestra—: recibe las alertas y puede administrar.
+ *
+ * La distinción no es cosmética: define en qué pantalla arranca la app y qué
+ * puede hacer quien la tiene en la mano.
+ */
+export enum DeviceKind {
+  CHILD = 'child',
+  CAREGIVER = 'caregiver',
+}

@@ -1,7 +1,8 @@
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Pictogram } from '@vozaac/shared';
 import type { Palette } from '../theme';
-import { spacing } from '../theme';
+import { radius, spacing } from '../theme';
+import { useLayout } from '../state/useLayout';
 
 interface Props {
   pictograms: Pictogram[];
@@ -16,13 +17,23 @@ interface Props {
  *
  * Muestra las imágenes y no sólo el texto porque quien usa el comunicador
  * generalmente no lee: la frase escrita no le devolvería nada.
+ *
+ * En un celular vertical la fila única no entra: los pictogramas quedarían
+ * espiando por una rendija. Ahí la barra se parte en dos —la frase arriba, los
+ * botones abajo— en vez de encoger todo, porque "Hablar" es el botón que más
+ * se toca y no puede achicarse.
  */
 export function PhraseBar({ pictograms, palette, onSpeak, onClear, onRemoveLast }: Props) {
   const isEmpty = pictograms.length === 0;
+  const { isCompact } = useLayout();
 
   return (
     <View
-      style={[styles.container, { backgroundColor: palette.surface, borderColor: palette.border }]}
+      style={[
+        styles.container,
+        isCompact && styles.containerCompact,
+        { backgroundColor: palette.surface, borderColor: palette.border },
+      ]}
     >
       <ScrollView
         horizontal
@@ -53,7 +64,7 @@ export function PhraseBar({ pictograms, palette, onSpeak, onClear, onRemoveLast 
         )}
       </ScrollView>
 
-      <View style={styles.actions}>
+      <View style={[styles.actions, isCompact && styles.actionsCompact]}>
         <Pressable
           testID="button-speak"
           accessibilityRole="button"
@@ -61,7 +72,11 @@ export function PhraseBar({ pictograms, palette, onSpeak, onClear, onRemoveLast 
           accessibilityState={{ disabled: isEmpty }}
           disabled={isEmpty}
           onPress={onSpeak}
-          style={[styles.button, { backgroundColor: palette.accent, opacity: isEmpty ? 0.4 : 1 }]}
+          style={[
+            styles.button,
+            isCompact && styles.buttonCompact,
+            { backgroundColor: palette.accent, opacity: isEmpty ? 0.4 : 1 },
+          ]}
         >
           <Text style={styles.buttonText}>Hablar</Text>
         </Pressable>
@@ -103,6 +118,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     minHeight: 110,
   },
+  // En celular vertical la barra se apila y deja la fila entera a la frase.
+  containerCompact: { flexDirection: 'column', alignItems: 'stretch', minHeight: 150 },
   strip: { flex: 1 },
   stripContent: { alignItems: 'center', gap: spacing.sm },
   placeholder: { fontSize: 16, paddingHorizontal: spacing.sm },
@@ -110,13 +127,20 @@ const styles = StyleSheet.create({
   chipImage: { width: 60, height: 60 },
   chipText: { fontSize: 13, fontWeight: '600' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginLeft: spacing.sm },
-  button: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderRadius: 12 },
+  actionsCompact: { marginLeft: 0, marginTop: spacing.sm, justifyContent: 'space-between' },
+  button: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radius.button,
+  },
+  // Apilada, "Hablar" se lleva el ancho sobrante: es el botón que más se toca.
+  buttonCompact: { flex: 1, alignItems: 'center' },
   buttonText: { color: '#FFFFFF', fontSize: 20, fontWeight: '700' },
   buttonSmall: {
     width: 56,
     height: 56,
     borderWidth: 2,
-    borderRadius: 12,
+    borderRadius: radius.button,
     alignItems: 'center',
     justifyContent: 'center',
   },

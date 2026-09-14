@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { ProfileCaregiver } from '../../users/entities/profile-caregiver.entity';
 import { enumColumn, timestampColumnType } from '../../common/column-types';
 
 /**
@@ -41,8 +42,13 @@ export class Caregiver {
   @Column({ type: 'varchar', length: 255, nullable: true, select: false })
   therapistPinHash: string | null;
 
+  /** Perfiles que este cuidador creó. El acceso lo define `profileLinks`. */
   @OneToMany(() => User, (user) => user.caregiver, { cascade: ['soft-remove'] })
   users: User[];
+
+  /** Chicos/as de los que es responsable, los haya creado o no. */
+  @OneToMany(() => ProfileCaregiver, (link) => link.caregiver)
+  profileLinks: ProfileCaregiver[];
 
   @CreateDateColumn({ type: timestampColumnType() })
   createdAt: Date;

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { Pictogram } from '@vozaac/shared';
+import { MAX_PHRASE_LENGTH, type Pictogram } from '@vozaac/shared';
 
 /**
  * La frase que se va armando al tocar pictogramas (Módulo 3).
@@ -11,8 +11,13 @@ export function usePhrase() {
   const [pictograms, setPictograms] = useState<Pictogram[]>([]);
 
   const add = useCallback((pictogram: Pictogram) => {
-    // Se permite repetir el mismo pictograma: "quiero más más" es una frase válida.
-    setPictograms((current) => [...current, pictogram]);
+    setPictograms((current) => {
+      // Pasado el tope la barra deja de leerse de un vistazo, así que se
+      // ignora el toque en vez de seguir agregando fuera de la vista.
+      if (current.length >= MAX_PHRASE_LENGTH) return current;
+      // Se permite repetir el mismo pictograma: "quiero más más" es una frase válida.
+      return [...current, pictogram];
+    });
   }, []);
 
   /** Borra el último, que es lo que espera quien se equivocó al tocar. */

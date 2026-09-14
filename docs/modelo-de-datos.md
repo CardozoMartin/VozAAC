@@ -131,6 +131,136 @@ La alternativa era declarar todo como `varchar`, pero eso le sacaría a
 PostgreSQL la validación del enum a nivel base — justamente lo que queremos
 conservar donde importa.
 
+## Varios responsables por chico/a (Módulo 9, paso 3)
+
+El modelo original del Doc daba un solo cuidador por perfil, y eso dejaba
+afuera el caso normal: la madre y el padre cuidan al mismo chico/a, y muchas
+veces también un hermano mayor, una abuela o la maestra. Con la relación
+uno-a-muchos el segundo responsable tenía que compartir la cuenta del primero,
+que además de incómodo mezcla en un solo login a personas distintas y hace
+imposible saber después quién cambió qué.
+
+```
+Caregiver ◄──── N ProfileCaregiver N ────► User
+                                    │
+              CaregiverInvite ──────┘
+```
+
+### ProfileCaregiver
+
+La tabla intermedia. Desde acá sale **el acceso**: `ProfileOwnershipService`,
+el listado de perfiles, el editor, el buscador y la vinculación de dispositivos
+cruzan por ella en vez de comparar `users.caregiverId`.
+
+Todos los responsables pueden lo mismo, así que no hay columna de rol.
+`relationship` ("Mamá", "Hermano") es sólo una etiqueta para distinguir quién
+es quién en la lista.
+
+`users.caregiverId` se conserva: sigue diciendo quién creó el perfil, que es un
+dato real, y de ahí cuelga la cascada de borrado. Lo que cambió es que ya no
+decide quién ve qué.
+
+El índice único sobre (userId, caregiverId) evita filas repetidas —sumar dos
+veces a la misma persona no significa nada distinto de sumarla una— y además es
+el que resuelve la pregunta que se hace en cada request del editor.
+
+### CaregiverInvite
+
+El código con el que se suma a alguien. Se parece al `LinkCode` de
+dispositivos, pero resuelve otra cosa: aquel enrola un aparato y le abre una
+sesión, este suma a una persona que tiene su propia cuenta.
+
+Vive 48 horas y no quince minutos: el de dispositivos se canjea con los dos
+aparatos sobre la mesa, y este se manda por mensaje a alguien que capaz se
+registra a la noche.
+
+### Qué hay que recordar al migrar
+
+La migración `MultipleCaregivers` hace un backfill: cada perfil existente queda
+a cargo de quien lo creó. Sin ese `INSERT ... SELECT`, al terminar la migración
+el acceso saldría de una tabla vacía y ninguna familia vería a su hijo/a al
+abrir la app.
+
+Revertirla descarta los responsables agregados, y es inevitable:
+`users.caregiverId` guarda uno solo y no hay dónde poner a los demás.
+
+## Vinculación de dispositivos (Módulo 9, paso 2)
+
+La vinculación de dispositivos suma dos entidades que cuelgan de `Caregiver` y,
+opcionalmente, de `User`. No forman parte del modelo del Doc: son del aporte
+propio del Módulo 9.
+
+```
+Caregiver
+    │ 1..N ──────────────► DeviceSession ──► 0..1 User
+    │ 1..N ──────────────► LinkCode      ──► 0..1 User
+```
+
+### DeviceSession
+
+La sesión permanente de un dispositivo enrolado. Existe porque el JWT de siete
+días no sirve en el celular del chico/a: una vez por semana lo dejaría en el
+login, y él no puede resolverlo.
+
+De `refreshTokenHash` se guarda el hash y nunca el token, igual que con las
+contraseñas. Es SHA-256 y no bcrypt, a diferencia del `passwordHash` del
+cuidador: un refresh token son 32 bytes aleatorios, así que no hay diccionario
+que lo adivine y el coste alto de bcrypt no compraría nada; además el hash
+tiene que ser determinístico para buscar la sesión por índice, y con bcrypt
+habría que recorrer la tabla entera.
+
+`userId` es nulo en el dispositivo de un responsable, que elige perfil como
+siempre, y apunta al perfil en el del chico/a, que abre directo en su tablero.
+
+`revokedAt` marca la revocación en vez de borrar la fila: al cuidador le sirve
+saber que ese acceso existió y cuándo terminó. `lastSeenAt` le permite
+distinguir el dispositivo en uso del que perdió hace meses.
+
+### LinkCode
+
+El código de un solo uso con el que se enrola un dispositivo. A diferencia del
+refresh token, acá el código se guarda en claro: vive quince minutos, sirve una
+sola vez, y hay que poder mostrárselo al cuidador mientras está vigente por si
+cerró la pantalla. Un hash impediría eso sin comprar seguridad real para una
+ventana tan corta.
+
+`failedAttempts` quema el código a los cinco intentos: seis caracteres sin
+límite de intentos se rompen a fuerza bruta, con límite no. Se cuenta sólo
+contra códigos que existen — sumarle intentos a códigos inventados no protege
+nada y permitiría que un tercero quemara el código de otro tipeando cualquier
+cosa.
+
+## Alertas de pictogramas urgentes (Módulo 9, paso 4)
+
+`pictograms.isUrgent` marca qué celdas avisan al tocarse, y la tabla `alerts`
+guarda cada aviso hasta que un responsable lo atiende.
+
+### Por qué `Alert` y no `UsageLog`
+
+El toque queda registrado en las dos tablas, pero resuelven cosas distintas.
+`UsageLog` es material de reportes: crece rápido, nadie lo lee de a una fila y
+se consulta agregado. Una alerta es un mensaje dirigido a personas, se lee de a
+una y tiene estado —vista o no—. Meterlas en la misma tabla obligaría a filtrar
+el historial entero cada veinte segundos para encontrar las pocas filas que
+importan.
+
+### Qué se duplica y por qué
+
+`pictogramText` y `pictogramImageUrl` se copian al emitir el aviso, aunque
+`pictogramId` ya apunte al pictograma. Es deliberado: si el terapeuta lo
+renombra o lo borra después, la alerta tiene que seguir diciendo lo que el
+chico/a quiso decir esa noche. La FK usa `ON DELETE SET NULL` por lo mismo —
+borrar un pictograma no puede borrar el aviso.
+
+`occurredAt` va aparte de `createdAt` porque el aviso puede llegar tarde —sin
+señal, o con la app cerrada— y lo que importa es cuándo lo tocó el chico/a, no
+cuándo se enteró el servidor.
+
+`acknowledgedByCaregiverId` importa por el paso 3: con varios responsables, si
+la madre ya fue a ver al chico/a, el padre necesita saberlo para no salir
+corriendo también. No se reescribe una vez puesto: quien atendió primero es el
+dato que sirve.
+
 ## Qué está verificado por tests
 
 Los tests de integración en

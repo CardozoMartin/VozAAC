@@ -62,6 +62,33 @@ export class PictogramsService {
     return pictogram;
   }
 
+  /**
+   * Buscador del editor (Módulo 4): pictogramas del cuidador cuyo texto
+   * contenga el término.
+   *
+   * La búsqueda se ancla al cuidador dentro de la propia consulta y no con un
+   * filtro posterior: así un tablero ajeno no puede aparecer nunca en los
+   * resultados, ni siquiera por error de programación más adelante.
+   */
+  searchForCaregiver(caregiverId: string, term: string, boardId?: string): Promise<Pictogram[]> {
+    const query = this.pictogramsRepository
+      .createQueryBuilder('pictogram')
+      .innerJoin('pictogram.category', 'category')
+      .innerJoin('category.board', 'board')
+      .innerJoin('board.user', 'user')
+      .innerJoin('user.caregiverLinks', 'link')
+      .where('link.caregiverId = :caregiverId', { caregiverId })
+      .andWhere('LOWER(pictogram.text) LIKE LOWER(:term)', { term: `%${term.trim()}%` })
+      .orderBy('pictogram.text', 'ASC')
+      .take(50);
+
+    if (boardId) {
+      query.andWhere('board.id = :boardId', { boardId });
+    }
+
+    return query.getMany();
+  }
+
   async update(id: string, dto: UpdatePictogramDto): Promise<Pictogram> {
     const pictogram = await this.findOne(id);
     const targetCategoryId = dto.categoryId ?? pictogram.categoryId;

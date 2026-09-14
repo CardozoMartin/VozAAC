@@ -1,5 +1,6 @@
 import { PictogramSource } from '@vozaac/shared';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -41,4 +42,9 @@ export class CreatePictogramDto {
   @IsInt()
   @Min(0)
   order?: number;
+
+  /** Si tocarlo avisa a los responsables (Módulo 9, paso 4). */
+  @IsOptional()
+  @IsBoolean()
+  isUrgent?: boolean;
 }

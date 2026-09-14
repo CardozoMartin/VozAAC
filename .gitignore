@@ -19,8 +19,10 @@ coverage/
 *.lcov
 .nyc_output/
 
-# Uploads de desarrollo (imágenes y audios de pictogramas)
-apps/api/uploads/
+# Uploads de desarrollo (imágenes y audios de pictogramas).
+# Se ignora el contenido y no el directorio: con la barra final git ni siquiera
+# mira adentro, y la excepción del .gitkeep no llegaría a aplicarse.
+apps/api/uploads/*
 !apps/api/uploads/.gitkeep
 
 # Bases de datos locales

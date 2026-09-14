@@ -3,7 +3,7 @@
     "name": "VozAAC",
     "slug": "vozaac",
     "version": "0.1.0",
-    "orientation": "landscape",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
@@ -22,7 +22,8 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "apiUrl": "http://localhost:3010/api"
+      "_comment": "apiUrl vacio: el cliente deriva la IP del servidor de Expo. Poner una URL aca solo para apuntar a un backend desplegado o a un tunel.",
+      "apiUrl": ""
     }
   }
 }

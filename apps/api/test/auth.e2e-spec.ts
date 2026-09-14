@@ -9,6 +9,7 @@ import { AuthModule } from '../src/auth/auth.module';
 import { UsersModule } from '../src/users/users.module';
 import { User } from '../src/users/entities/user.entity';
 import { TEST_ENTITIES } from './test-datasource';
+import { crearPerfil } from './create-profile';
 
 /**
  * E2E del Módulo 2 sobre SQLite en memoria, para que corra sin Docker.
@@ -242,13 +243,10 @@ describe('Autenticación y perfiles (e2e)', () => {
 
       const bruno = await registrar('bruno@vozaac.local');
 
-      const usersRepository = dataSource.getRepository(User);
-      await usersRepository.save(
-        usersRepository.create({ name: 'Hija de Ana', caregiverId: ana.body.caregiver.id }),
-      );
-      perfilDeBruno = await usersRepository.save(
-        usersRepository.create({ name: 'Hijo de Bruno', caregiverId: bruno.body.caregiver.id }),
-      );
+      await crearPerfil(dataSource, ana.body.caregiver.id, { name: 'Hija de Ana' });
+      perfilDeBruno = await crearPerfil(dataSource, bruno.body.caregiver.id, {
+        name: 'Hijo de Bruno',
+      });
     });
 
     it('lista únicamente los perfiles propios', async () => {
@@ -274,14 +272,11 @@ describe('Autenticación y perfiles (e2e)', () => {
     });
 
     it('incluye la edad calculada en el perfil', async () => {
-      const usersRepository = dataSource.getRepository(User);
       const { body: ana } = await request(app.getHttpServer())
         .get('/api/auth/me')
         .set('Authorization', `Bearer ${tokenAna}`);
 
-      await usersRepository.save(
-        usersRepository.create({ name: 'Con fecha', caregiverId: ana.id, birthDate: '2018-06-15' }),
-      );
+      await crearPerfil(dataSource, ana.id, { name: 'Con fecha', birthDate: '2018-06-15' });
 
       const response = await request(app.getHttpServer())
         .get('/api/users')

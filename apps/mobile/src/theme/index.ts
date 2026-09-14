@@ -52,3 +52,10 @@ export function categoryColor(color: string, mode: ColorMode | undefined): strin
 }
 
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24 } as const;
+
+/**
+ * Los tokens visuales viven en su propio archivo pero se reexportan acá: las
+ * pantallas ya importan `spacing` y `paletteFor` desde `../theme`, y no hay
+ * motivo para que tengan que acordarse de dos rutas.
+ */
+export { typography, codeTypography, radius, touchTarget, maxFormWidth } from './tokens';

@@ -1,24 +1,47 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { GridSize, type AccessibilitySettings, type Board, type Pictogram } from '@vozaac/shared';
 import { api } from '../api/client';
 import { usePhrase } from '../state/usePhrase';
 import { useSpeech } from '../state/useSpeech';
 import { useUsageQueue } from '../state/useUsageQueue';
+import { useUrgentAlert } from '../state/useUrgentAlert';
+import { tremorOptionsFrom } from '../state/useTremorFilter';
+import { useLayout } from '../state/useLayout';
 import { PhraseBar } from '../components/PhraseBar';
 import { CategoryTabs } from '../components/CategoryTabs';
 import { PictogramGrid } from '../components/PictogramGrid';
-import { categoryColor, paletteFor, spacing } from '../theme';
+import { categoryColor, paletteFor, spacing, touchTarget, typography } from '../theme';
+import { Button } from '../components/ui';
 
 interface Props {
   token: string;
   userId: string;
   profileName: string;
-  onExit: () => void;
+  /**
+   * Vuelve al selector de perfiles. Ausente en el dispositivo de un chico/a
+   * (Módulo 9): su perfil quedó fijado al vincularlo, y una salida que él no
+   * sabe deshacer sólo lo dejaría afuera de su comunicador.
+   */
+  onExit?: () => void;
+  /** Abre el modo terapeuta, previo PIN. Ausente si el cuidador no configuró uno. */
+  onOpenEditor?: () => void;
+  /**
+   * Abre la bandeja de avisos (Módulo 9, paso 4). Ausente en el dispositivo
+   * del chico/a: los avisos son para los adultos, y él acaba de mandarlos.
+   */
+  onOpenAlerts?: () => void;
 }
 
 /** Pantalla principal: el comunicador que usa el chico/a (Módulo 3). */
-export function CommunicatorScreen({ token, userId, profileName, onExit }: Props) {
+export function CommunicatorScreen({
+  token,
+  userId,
+  profileName,
+  onExit,
+  onOpenEditor,
+  onOpenAlerts,
+}: Props) {
   const [board, setBoard] = useState<Board | null>(null);
   const [settings, setSettings] = useState<AccessibilitySettings | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -27,7 +50,10 @@ export function CommunicatorScreen({ token, userId, profileName, onExit }: Props
   const phrase = usePhrase();
   const { speak } = useSpeech(settings);
   const usage = useUsageQueue(token, userId);
+  const alert = useUrgentAlert(token, userId);
   const palette = paletteFor(settings?.colorMode);
+  const tremor = useMemo(() => tremorOptionsFrom(settings), [settings]);
+  const { isCompact } = useLayout();
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +94,12 @@ export function CommunicatorScreen({ token, userId, profileName, onExit }: Props
     // Se dice el pictograma suelto al tocarlo: es la respuesta inmediata que
     // enseña la relación entre la imagen y su palabra.
     speak(pictogram.text);
+
+    // Un pictograma urgente además avisa a los responsables (Módulo 9, paso
+    // 4). Va después de hablar y de sumarlo a la frase, no en su lugar: el
+    // chico/a está comunicando algo, y que además dispare un aviso no lo
+    // convierte en otra cosa.
+    alert.raise(pictogram);
   }
 
   function handleSpeak() {
@@ -84,9 +116,7 @@ export function CommunicatorScreen({ token, userId, profileName, onExit }: Props
     return (
       <View style={[styles.centered, { backgroundColor: palette.background }]}>
         <Text style={[styles.errorText, { color: palette.danger }]}>{error}</Text>
-        <Pressable onPress={onExit} style={[styles.exitButton, { borderColor: palette.border }]}>
-          <Text style={{ color: palette.text }}>Volver</Text>
-        </Pressable>
+        {onExit && <Button label="Volver" variant="secondary" palette={palette} onPress={onExit} />}
       </View>
     );
   }
@@ -123,28 +153,87 @@ export function CommunicatorScreen({ token, userId, profileName, onExit }: Props
         color={categoryColor(selectedCategory?.color ?? palette.accent, settings.colorMode)}
         palette={palette}
         onSelect={handleSelect}
+        tremor={tremor}
       />
 
-      <View style={[styles.footer, { borderColor: palette.border }]}>
-        <Text style={[styles.profileName, { color: palette.textMuted }]}>{profileName}</Text>
-        <Pressable
-          testID="button-exit"
-          accessibilityRole="button"
-          accessibilityLabel="Cambiar de perfil"
-          onPress={onExit}
-          style={[styles.exitButton, { borderColor: palette.border }]}
+      {/*
+        El chico/a tiene que ver que su mensaje salió. Si no, no sabe si sirvió
+        de algo y lo va a tocar diez veces. El cartel se limpia solo a los
+        pocos segundos para no tapar la grilla.
+      */}
+      {alert.status !== 'idle' && (
+        <View
+          testID="alert-status"
+          style={[
+            styles.alertBanner,
+            {
+              backgroundColor: alert.status === 'failed' ? palette.danger : palette.accent,
+            },
+          ]}
         >
-          <Text style={{ color: palette.textMuted }}>Cambiar perfil</Text>
-        </Pressable>
+          <Text style={styles.alertText}>
+            {alert.status === 'sending' && `Avisando "${alert.text}"…`}
+            {alert.status === 'sent' && `Avisado ✓  "${alert.text}"`}
+            {alert.status === 'failed' && `No se pudo avisar "${alert.text}"`}
+          </Text>
+        </View>
+      )}
+
+      <View style={[styles.footer, { borderColor: palette.border }]}>
+        <Text style={[styles.profileName, { color: palette.textMuted }]} numberOfLines={1}>
+          {profileName}
+        </Text>
+        <View style={styles.footerActions}>
+          {onOpenAlerts && (
+            <Button
+              testID="button-open-alerts"
+              label="Avisos"
+              variant="secondary"
+              palette={palette}
+              onPress={onOpenAlerts}
+              style={styles.footerButton}
+            />
+          )}
+          {onOpenEditor && (
+            /* En celular vertical no entran las dos etiquetas completas, y
+               acortar la del editor es preferible a que se corten las dos. */
+            <Button
+              testID="button-open-editor"
+              label={isCompact ? 'Terapeuta' : 'Modo terapeuta'}
+              accessibilityLabel="Modo terapeuta"
+              variant="secondary"
+              palette={palette}
+              onPress={onOpenEditor}
+              style={styles.footerButton}
+            />
+          )}
+          {onExit && (
+            <Button
+              testID="button-exit"
+              label={isCompact ? 'Perfil' : 'Cambiar perfil'}
+              accessibilityLabel="Cambiar de perfil"
+              variant="secondary"
+              palette={palette}
+              onPress={onExit}
+              style={styles.footerButton}
+            />
+          )}
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  alertBanner: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+  },
+  alertText: { color: '#FFFFFF', fontSize: 20, fontWeight: '700', textAlign: 'center' },
   container: { flex: 1 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  errorText: { fontSize: 18, textAlign: 'center', paddingHorizontal: spacing.lg },
+  errorText: { ...typography.subtitle, textAlign: 'center', paddingHorizontal: spacing.lg },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -153,11 +242,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
-  profileName: { fontSize: 14 },
-  exitButton: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
+  profileName: { ...typography.caption, flexShrink: 1, marginRight: spacing.sm },
+  footerActions: { flexDirection: 'row', gap: spacing.sm },
+  // Los botones del pie son para el adulto y no tienen que competir con la
+  // grilla, así que van más ajustados que un botón normal, sin bajar del
+  // área táctil mínima. El contraste con la grilla lo da el tamaño, no el
+  // color: un botón del pie sigue siendo legible, sólo que no llama.
+  footerButton: { paddingVertical: spacing.xs, minHeight: touchTarget.minHeight },
 });

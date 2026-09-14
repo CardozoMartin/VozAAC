@@ -3,18 +3,88 @@ import type {
   AuthResponse,
   Board,
   AccessibilitySettings,
+  ArasaacPictogram,
+  AcceptInviteResponse,
+  Alert,
+  Category,
+  DeviceAuthResponse,
+  DeviceKind,
+  LinkCodeResponse,
+  LinkedDevice,
+  InviteCodeResponse,
+  Pictogram,
+  PictogramSource,
+  ProfileCaregiverInfo,
+  RefreshResponse,
   UserProfile,
   UsageEventType,
 } from '@vozaac/shared';
 
+/** Campos con los que el editor crea o edita una categoría. */
+export interface NewCategory {
+  name: string;
+  boardId: string;
+  color?: string;
+  icon?: string | null;
+  order?: number;
+}
+
+/** Campos con los que el editor crea o edita un pictograma. */
+export interface NewPictogram {
+  text: string;
+  imageUrl: string;
+  categoryId: string;
+  audioUrl?: string | null;
+  source?: PictogramSource;
+  arasaacId?: number;
+  order?: number;
+  /** Si tocarlo avisa a los responsables (Módulo 9, paso 4). */
+  isUrgent?: boolean;
+}
+
+/** Puerto de la API en desarrollo; el mismo API_PORT del .env. */
+const API_PORT = 3010;
+
+/**
+ * IP de la máquina que está sirviendo el bundle de Expo.
+ *
+ * Es la misma que corre la API mientras se desarrolla, y Expo ya la conoce
+ * —se la pasa al dispositivo para servirle el JavaScript—, así que se puede
+ * derivar en vez de escribirla a mano. Importa porque esa IP cambia cada vez
+ * que el router renueva el DHCP, y tener que editar app.json en cada cambio
+ * es la clase de fricción que termina en "no me anda" sin saber por qué.
+ *
+ * Devuelve null en build de producción, donde no hay servidor de Expo.
+ */
+function expoHostIp(): string | null {
+  // hostUri viene como "192.168.1.7:8081"; según la versión de Expo aparece en
+  // uno u otro lugar, así que se prueban los dos.
+  const hostUri =
+    Constants.expoConfig?.hostUri ??
+    (Constants.expoGoConfig as { debuggerHost?: string } | undefined)?.debuggerHost;
+
+  const host = hostUri?.split(':')[0];
+  return host && host !== 'localhost' && host !== '127.0.0.1' ? host : null;
+}
+
 /**
  * URL de la API.
  *
- * Sale de app.json para poder apuntarla a la IP de la máquina cuando se prueba
- * desde un celular real: ahí `localhost` es el propio teléfono y no la compu.
+ * El orden importa: si `extra.apiUrl` está puesto en app.json gana siempre,
+ * porque es la forma de apuntar a un backend desplegado o a un túnel. Si no,
+ * se deriva de la IP de Expo, que es lo que sirve al probar desde un celular
+ * en la misma red. `localhost` queda sólo como último recurso: desde un
+ * dispositivo real es el propio teléfono y no la computadora.
  */
-export const API_URL =
-  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? 'http://localhost:3010/api';
+function resolveApiUrl(): string {
+  const configured = Constants.expoConfig?.extra?.apiUrl as string | undefined;
+  if (configured) return configured;
+
+  const host = expoHostIp();
+  return host ? `http://${host}:${API_PORT}/api` : `http://localhost:${API_PORT}/api`;
+}
+
+export const API_URL = resolveApiUrl();
 
 /** Error con el status HTTP, para que las pantallas distingan 401 de una caída de red. */
 export class ApiError extends Error {
@@ -67,13 +137,146 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
 
+  register: (email: string, password: string, fullName: string) =>
+    request<AuthResponse>('/auth/register', null, {
+      method: 'POST',
+      body: JSON.stringify({ email, password, fullName }),
+    }),
+
+  // --- Vinculación de dispositivos (Módulo 9) ---
+
+  /** Genera el código que el cuidador va a dictar en el otro dispositivo. */
+  createLinkCode: (token: string, input: { kind: DeviceKind; userId?: string }) =>
+    request<LinkCodeResponse>('/devices/link-codes', token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  /**
+   * Canjea el código en el dispositivo nuevo. Sin token: el código es la
+   * credencial de quien todavía no tiene sesión.
+   */
+  redeemLinkCode: (code: string, deviceName?: string) =>
+    request<DeviceAuthResponse>('/devices/redeem', null, {
+      method: 'POST',
+      body: JSON.stringify({ code, ...(deviceName ? { deviceName } : {}) }),
+    }),
+
+  /** Renueva la sesión de un dispositivo vinculado. */
+  refreshSession: (refreshToken: string) =>
+    request<RefreshResponse>('/devices/refresh', null, {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken }),
+    }),
+
+  linkedDevices: (token: string) => request<LinkedDevice[]>('/devices', token),
+
+  revokeDevice: (token: string, deviceId: string) =>
+    request<void>(`/devices/${deviceId}`, token, { method: 'DELETE' }),
+
   profiles: (token: string) => request<UserProfile[]>('/users', token),
+
+  /** Crea el perfil de un chico/a, con su tablero y vocabulario inicial. */
+  createProfile: (
+    token: string,
+    input: {
+      name: string;
+      birthDate?: string | null;
+      photoUrl?: string | null;
+      /** Cómo se llama a sí mismo quien lo crea: "Mamá", "Papá". */
+      relationship?: string | null;
+    },
+  ) => request<UserProfile>('/users', token, { method: 'POST', body: JSON.stringify(input) }),
+
+  updateProfile: (
+    token: string,
+    id: string,
+    changes: { name?: string; birthDate?: string | null; photoUrl?: string | null },
+  ) =>
+    request<UserProfile>(`/users/${id}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify(changes),
+    }),
+
+  deleteProfile: (token: string, id: string) =>
+    request<void>(`/users/${id}`, token, { method: 'DELETE' }),
+
+  // --- Responsables del chico/a (Módulo 9, paso 3) ---
+
+  /** Quiénes están a cargo: madre, padre, un hermano, la maestra. */
+  profileCaregivers: (token: string, userId: string) =>
+    request<ProfileCaregiverInfo[]>(`/users/${userId}/caregivers`, token),
+
+  /** Genera el código con el que se suma otro responsable. */
+  inviteCaregiver: (token: string, userId: string, relationship?: string) =>
+    request<InviteCodeResponse>(`/users/${userId}/invites`, token, {
+      method: 'POST',
+      body: JSON.stringify(relationship ? { relationship } : {}),
+    }),
+
+  /**
+   * Acepta una invitación. No cuelga de /users/:id porque quien acepta todavía
+   * no ve ese perfil —ni siquiera sabe su id—: lo único que tiene es el código.
+   */
+  acceptInvite: (token: string, code: string) =>
+    request<AcceptInviteResponse>('/invites/accept', token, {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    }),
+
+  removeCaregiver: (token: string, userId: string, caregiverId: string) =>
+    request<void>(`/users/${userId}/caregivers/${caregiverId}`, token, { method: 'DELETE' }),
+
+  // --- Alertas de pictogramas urgentes (Módulo 9, paso 4) ---
+
+  /** Avisa que el chico/a tocó un pictograma urgente. */
+  raiseAlert: (token: string, userId: string, pictogramId: string, occurredAt: string) =>
+    request<Alert>(`/users/${userId}/alerts`, token, {
+      method: 'POST',
+      body: JSON.stringify({ pictogramId, occurredAt }),
+    }),
+
+  /**
+   * Bandeja del responsable: las alertas de todos sus chicos/as.
+   *
+   * Con `onlyPending` trae sólo las que nadie atendió, que es lo que consulta
+   * la app cada veinte segundos para decidir si avisa.
+   */
+  alerts: (token: string, onlyPending = false) =>
+    request<Alert[]>(`/alerts${onlyPending ? '?pending=true' : ''}`, token),
+
+  acknowledgeAlert: (token: string, alertId: string) =>
+    request<Alert>(`/alerts/${alertId}/acknowledge`, token, { method: 'POST' }),
 
   defaultBoard: (token: string, userId: string) =>
     request<Board>(`/users/${userId}/boards/default`, token),
 
   accessibility: (token: string, userId: string) =>
     request<AccessibilitySettings>(`/users/${userId}/accessibility`, token),
+
+  /** Guarda cambios parciales de accesibilidad (Módulo 5). */
+  updateAccessibility: (
+    token: string,
+    userId: string,
+    changes: Partial<
+      Pick<
+        AccessibilitySettings,
+        | 'gridSize'
+        | 'colorMode'
+        | 'tremorFilterEnabled'
+        | 'holdToConfirmMs'
+        | 'debounceMs'
+        | 'moveTolerancePx'
+        | 'speechRate'
+        | 'speechPitch'
+        | 'voiceId'
+      >
+    >,
+  ) =>
+    request<AccessibilitySettings>(`/users/${userId}/accessibility`, token, {
+      method: 'PATCH',
+      body: JSON.stringify(changes),
+    }),
 
   verifyPin: (token: string, pin: string) =>
     request<{ valid: boolean }>('/auth/pin/verify', token, {
@@ -92,4 +295,65 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ events }),
     }),
+
+  // --- Editor del modo terapeuta (Módulo 4) ---
+
+  createCategory: (token: string, input: NewCategory) =>
+    request<Category>('/categories', token, { method: 'POST', body: JSON.stringify(input) }),
+
+  updateCategory: (token: string, id: string, changes: Partial<NewCategory>) =>
+    request<Category>(`/categories/${id}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify(changes),
+    }),
+
+  deleteCategory: (token: string, id: string) =>
+    request<void>(`/categories/${id}`, token, { method: 'DELETE' }),
+
+  createPictogram: (token: string, input: NewPictogram) =>
+    request<Pictogram>('/pictograms', token, { method: 'POST', body: JSON.stringify(input) }),
+
+  updatePictogram: (token: string, id: string, changes: Partial<NewPictogram>) =>
+    request<Pictogram>(`/pictograms/${id}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify(changes),
+    }),
+
+  deletePictogram: (token: string, id: string) =>
+    request<void>(`/pictograms/${id}`, token, { method: 'DELETE' }),
+
+  searchPictograms: (token: string, term: string) =>
+    request<Pictogram[]>(`/pictograms/search?q=${encodeURIComponent(term)}`, token),
+
+  searchArasaac: (token: string, term: string) =>
+    request<ArasaacPictogram[]>(`/arasaac/search?q=${encodeURIComponent(term)}`, token),
+
+  /**
+   * Sube una imagen o un audio y devuelve su URL.
+   *
+   * Va como multipart y no como JSON, así que se arma un FormData a mano y se
+   * deja que fetch ponga el Content-Type con su boundary.
+   */
+  async upload(
+    token: string,
+    kind: 'image' | 'audio',
+    file: { uri: string; name: string; type: string },
+  ): Promise<{ url: string }> {
+    const form = new FormData();
+    // React Native acepta este objeto como parte de un FormData aunque no sea
+    // un Blob; por eso el cast.
+    form.append('file', file as unknown as Blob);
+
+    const response = await fetch(`${API_URL}/uploads/${kind}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { message?: string } | null;
+      throw new ApiError(body?.message ?? 'No se pudo subir el archivo', response.status);
+    }
+    return (await response.json()) as { url: string };
+  },
 };

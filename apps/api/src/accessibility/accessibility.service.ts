@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccessibilitySettings } from './entities/accessibility-settings.entity';
+import { UpdateAccessibilityDto } from './dto/update-accessibility.dto';
 
 @Injectable()
 export class AccessibilityService {
@@ -24,5 +25,20 @@ export class AccessibilityService {
       return existing;
     }
     return this.settingsRepository.save(this.settingsRepository.create({ userId }));
+  }
+
+  /**
+   * Aplica cambios parciales, creando la configuración si todavía no existía.
+   *
+   * Se hace sobre la fila leída y no con un `update` directo porque el PATCH
+   * puede llegar antes del primer GET —el terapeuta entra a los ajustes sin
+   * haber abierto el comunicador—, y ahí no habría fila que actualizar.
+   */
+  async updateForUser(
+    userId: string,
+    changes: UpdateAccessibilityDto,
+  ): Promise<AccessibilitySettings> {
+    const settings = await this.findOrCreateForUser(userId);
+    return this.settingsRepository.save(this.settingsRepository.merge(settings, changes));
   }
 }
