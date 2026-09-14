@@ -21,6 +21,12 @@ Proyecto de tesis. El plan completo por módulos está en [Doc.txt](Doc.txt).
 | 8      | Validación con usuarios reales         | Pendiente                              |
 | 9      | Vinculación y alertas al responsable   | Completo — vinculación, responsables y alertas |
 
+Los estilos de la app viven en `apps/mobile/src/theme/`: todas las pantallas y
+componentes usan esos tokens, no valores sueltos.
+
+Se trabaja en `dev`. `main` sigue en el Módulo 1 y recibe el merge recién con
+la primera versión completa, así que no refleja el estado del proyecto.
+
 El plan del Módulo 9 y lo que sigue está en
 [docs/proximos-pasos.md](docs/proximos-pasos.md). El detalle de las diez
 pantallas, para pasarle a una herramienta de diseño, está en
@@ -147,6 +153,26 @@ Si el celular no llega a la API, en orden: que ambos estén en el mismo WiFi (y
 que no sea una red que aísle a los clientes entre sí, como suele pasar en las
 de invitados); que el firewall de Windows deje entrar al puerto 3010 en el
 perfil de red privada; y recién ahí, un túnel.
+
+### En el navegador
+
+```bash
+npm run web
+```
+
+Levanta la app en `http://localhost:8081`, sin dispositivo. Sirve cuando el
+celular no puede alcanzar la PC —una red de invitados, o una escuela que aísla
+los clientes entre sí— y para revisar la interfaz sin escanear un QR cada vez.
+Acá `localhost` sí es la máquina correcta, así que la API se resuelve sola.
+
+Si ya hay un Expo corriendo, el 8081 está tomado y la consola ofrece pasar al
+8082.
+
+No reemplaza la prueba en el dispositivo. La síntesis de voz usa las voces del
+navegador y no las del celular, así que el `es-AR` va a sonar distinto; y el
+toque con mouse no se parece al de un chico/a con dificultades motrices, que es
+justo lo que el filtro anti-temblor tiene que resolver. Para eso, misma red o
+túnel.
 
 ## Endpoints
 

@@ -17,6 +17,7 @@
     "db:reset": "docker compose down -v && docker compose up -d postgres",
     "api": "npm run start:dev --workspace @vozaac/api",
     "mobile": "npm run start --workspace @vozaac/mobile",
+    "web": "npm run web --workspace @vozaac/mobile",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "eslint .",

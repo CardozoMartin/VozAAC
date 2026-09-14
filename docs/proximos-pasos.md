@@ -1,6 +1,6 @@
 # Próximos pasos
 
-Estado al 9 de septiembre de 2026, rama `feature/pitogramas`.
+Estado al 14 de septiembre de 2026, rama `dev`.
 
 ## Dónde quedamos
 
@@ -15,14 +15,42 @@ para que una familia pudiera usar el proyecto sin tocar la base a mano.
 | `bc7cb9f` | Orientación libre: la app corre en celular        |
 | `dfed24a` | La app encuentra sola la IP de la API             |
 | `6ee3efb` | Registro y alta de perfiles desde la app          |
+| `92519a3` | Tokens visuales en un solo lugar                  |
+| `eede357` | Última pantalla migrada a los tokens              |
 
 El Módulo 9 está completo: vinculación por código con sesión que no expira,
 varios responsables por chico/a, y alertas de pictogramas urgentes.
 
 378 tests en verde: 89 unitarios de la API, 149 e2e, 10 de integración y 130 de
-la app.
+la app. Corridos sobre `dev` el 14 de septiembre, después de la migración de
+tokens: ninguna pantalla se rompió al cambiar de estilos sueltos a tokens.
 
-Falta mergear a `main`: los Módulos 3, 4, 5 y 9 viven en esta rama.
+## Ramas
+
+`dev` integra todo y es donde se trabaja. `main` sigue en el Módulo 1 y recibe
+el merge recién cuando salga la primera versión completa, así que no refleja el
+estado del proyecto. `feature/pitogramas` ya está en `dev` desde el PR #2 y no
+tiene nada pendiente.
+
+## Tokens visuales
+
+Los cinco commits de `92519a3` a `eede357` sacaron los estilos repetidos de
+cada pantalla y los centralizaron en `apps/mobile/src/theme/`. Todas las
+pantallas y componentes los usan.
+
+Importa para lo que viene: el modo bajo estímulo del Módulo 5 y los gráficos
+del Módulo 6 necesitan una paleta coherente, y con los colores desperdigados
+en veinte archivos cada cambio era una recorrida a mano.
+
+## Correr la app sin un dispositivo
+
+`npm run web --workspace @vozaac/mobile` levanta la app en el navegador. Sirve
+cuando el celular no puede alcanzar la PC —redes de invitados, o una escuela
+que aísla los clientes entre sí— y para revisar la interfaz rápido.
+
+No reemplaza la prueba en el dispositivo: el TTS usa las voces del navegador,
+que no son las del celular, y el toque con mouse no se parece al de un chico/a
+con dificultades motrices. Para eso, o misma red, o un túnel.
 
 ## Módulo 9 — Vinculación de dispositivos y alertas
 
