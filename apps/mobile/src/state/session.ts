@@ -5,6 +5,7 @@ const TOKEN_KEY = 'vozaac.token';
 const PROFILE_KEY = 'vozaac.profileId';
 const REFRESH_KEY = 'vozaac.refreshToken';
 const DEVICE_KIND_KEY = 'vozaac.deviceKind';
+const DEVICE_SESSION_KEY = 'vozaac.deviceSessionId';
 
 /** Sesión tal como quedó guardada en el dispositivo. */
 export interface StoredSession {
@@ -14,6 +15,14 @@ export interface StoredSession {
   refreshToken: string | null;
   /** Para qué se vinculó este dispositivo; null si no se vinculó. */
   deviceKind: DeviceKind | null;
+  /**
+   * Id de la sesión de dispositivo, cuando se vinculó por código.
+   *
+   * Se guarda para poder mandarlo al registrar el push: es lo que le permite al
+   * backend no devolverle el aviso al propio dispositivo del chico/a (Módulo 9,
+   * paso 5).
+   */
+  deviceSessionId: string | null;
 }
 
 /**
@@ -49,12 +58,16 @@ export const session = {
     refreshToken: string;
     deviceKind: DeviceKind;
     profileId: string | null;
+    deviceSessionId?: string;
   }): Promise<void> {
     const pares: [string, string][] = [
       [TOKEN_KEY, input.token],
       [REFRESH_KEY, input.refreshToken],
       [DEVICE_KIND_KEY, input.deviceKind],
     ];
+    if (input.deviceSessionId) {
+      pares.push([DEVICE_SESSION_KEY, input.deviceSessionId]);
+    }
     if (input.profileId) {
       pares.push([PROFILE_KEY, input.profileId]);
     }
@@ -70,16 +83,29 @@ export const session = {
   },
 
   async load(): Promise<StoredSession> {
-    const [token, profileId, refreshToken, deviceKind] = await Promise.all([
+    const [token, profileId, refreshToken, deviceKind, deviceSessionId] = await Promise.all([
       AsyncStorage.getItem(TOKEN_KEY),
       AsyncStorage.getItem(PROFILE_KEY),
       AsyncStorage.getItem(REFRESH_KEY),
       AsyncStorage.getItem(DEVICE_KIND_KEY),
+      AsyncStorage.getItem(DEVICE_SESSION_KEY),
     ]);
-    return { token, profileId, refreshToken, deviceKind: deviceKind as DeviceKind | null };
+    return {
+      token,
+      profileId,
+      refreshToken,
+      deviceKind: deviceKind as DeviceKind | null,
+      deviceSessionId,
+    };
   },
 
   async clear(): Promise<void> {
-    await AsyncStorage.multiRemove([TOKEN_KEY, PROFILE_KEY, REFRESH_KEY, DEVICE_KIND_KEY]);
+    await AsyncStorage.multiRemove([
+      TOKEN_KEY,
+      PROFILE_KEY,
+      REFRESH_KEY,
+      DEVICE_KIND_KEY,
+      DEVICE_SESSION_KEY,
+    ]);
   },
 };

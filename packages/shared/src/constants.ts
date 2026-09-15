@@ -129,3 +129,34 @@ export const URGENT_ALERT = {
   /** Cada cuánto la app del responsable consulta si hay alertas nuevas. */
   pollIntervalMs: 20_000,
 } as const;
+
+/**
+ * Notificaciones push de los avisos urgentes (Módulo 9, paso 5).
+ *
+ * El polling del paso 4 sigue existiendo y es la red de seguridad: si el push
+ * no sale —token vencido, sin señal, permiso denegado— el aviso igual aparece
+ * cuando el responsable abre la app. El push es para que no tenga que abrirla.
+ */
+export const PUSH = {
+  /** Endpoint de Expo que reparte a FCM y APNs. */
+  expoApiUrl: 'https://exp.host/--/api/v2/push/send',
+  /**
+   * Cuántos mensajes por request. Expo acepta hasta 100 y con una familia de
+   * cinco dispositivos nunca vamos a llegar, pero el envío se hace en lotes
+   * igual para no tener que revisarlo si un perfil termina con muchos.
+   */
+  batchSize: 100,
+  /**
+   * Prioridad y canal de Android. Un aviso de dolor tiene que sonar con la
+   * pantalla apagada; en 'default' Android puede demorarlo para ahorrar
+   * batería, que es justo lo que no queremos acá.
+   */
+  androidChannelId: 'avisos-urgentes',
+  priority: 'high',
+  /**
+   * Segundos que el push sigue siendo útil. Pasado ese rato el aviso ya no
+   * sirve como alerta —o lo atendieron, o el chico/a volvió a tocar— y sólo
+   * confundiría al que lo recibe tarde.
+   */
+  ttlSeconds: 3600,
+} as const;

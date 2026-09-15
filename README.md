@@ -19,7 +19,7 @@ Proyecto de tesis. El plan completo por módulos está en [Doc.txt](Doc.txt).
 | 6      | Historial y reportes                   | Entidad lista; agregaciones pendientes |
 | 7      | Offline y sincronización               | Pendiente                              |
 | 8      | Validación con usuarios reales         | Pendiente                              |
-| 9      | Vinculación y alertas al responsable   | Completo — vinculación, responsables y alertas |
+| 9      | Vinculación y alertas al responsable   | Completo — vinculación, responsables, alertas y push |
 
 Los estilos de la app viven en `apps/mobile/src/theme/`: todas las pantallas y
 componentes usan esos tokens, no valores sueltos.
@@ -272,11 +272,27 @@ los pocos segundos. Si no lo viera, no sabría si sirvió de algo y lo tocaría
 diez veces. Cuando falla se le dice que no salió: un "avisado" falso es peor
 que nada, porque se queda esperando ayuda que nadie pidió.
 
-La bandeja se consulta cada veinte segundos en vez de recibir push. Es a
-propósito: así funciona en Expo Go, sin development build ni credenciales, y el
-circuito queda probado entero para sumarle push encima sin rehacer nada. Más
-adelante se puede sumar WhatsApp o SMS, que además llegan a responsables sin
-smartphone.
+**El aviso además sale por push** (Módulo 9, paso 5). Va a todos los
+responsables vinculados al perfil —la madre que creó la cuenta, el padre, la
+hermana— por la Expo Push API, que cubre Android e iOS con un solo token y sin
+guardar credenciales de Google ni de Apple en este backend.
+
+El dispositivo del propio chico/a queda excluido. Es menos obvio de lo que
+parece: su tablet cuelga del cuidador que la enroló, así que sin distinguirla
+recibiría su propio aviso de dolor como si alguien le estuviera hablando. Se
+excluye por `deviceSessionId`, que la app guarda al vincularse.
+
+La bandeja **sigue consultando cada veinte segundos**, y eso no es redundante:
+es la red de seguridad para cuando el push no sale —permiso denegado, token
+vencido, Expo caído—. El envío es best-effort y nunca hace fallar el aviso del
+chico/a, porque desde su lado ya salió. Si este dispositivo no va a poder
+avisar, la bandeja se lo dice al adulto: uno que cree que le van a sonar y no le
+suenan está peor que uno que sabe que tiene que entrar a mirar.
+
+Para probarlo en un teléfono hace falta un development build: Expo Go no recibe
+push remotas desde el SDK 53. Los pasos están en
+[docs/proximos-pasos.md](docs/proximos-pasos.md). Más adelante se puede sumar
+WhatsApp o SMS, que además llegan a responsables sin smartphone.
 
 El aviso guarda el texto y la imagen copiados del pictograma: si el terapeuta
 lo renombra o lo borra después, el responsable tiene que poder seguir leyendo
@@ -325,6 +341,8 @@ otros dispositivos —el del chico/a, el de otro responsable— con un código.
 | POST   | `/api/devices/refresh`     | Renueva la sesión de un dispositivo       |
 | GET    | `/api/devices`             | Dispositivos vinculados del cuidador      |
 | DELETE | `/api/devices/:id`         | Revoca el acceso de un dispositivo        |
+| POST   | `/api/devices/push-token`  | Registra el equipo para recibir avisos    |
+| DELETE | `/api/devices/push-token/:token` | Da de baja el token al cerrar sesión |
 
 `redeem` y `refresh` son los dos únicos endpoints sin `Authorization`: quien
 los llama todavía no tiene JWT, y su credencial es el código en un caso y el

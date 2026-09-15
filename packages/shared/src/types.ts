@@ -229,3 +229,33 @@ export interface ArasaacPictogram {
   text: string;
   imageUrl: string;
 }
+
+/**
+ * Lo que manda un dispositivo para poder recibir avisos push (Módulo 9, paso 5).
+ *
+ * El token lo emite Expo y corresponde a la instalación de la app en ese
+ * teléfono: cambia si la reinstalan, así que la app lo reenvía en cada arranque
+ * y el backend hace upsert en vez de fallar por duplicado.
+ */
+export interface RegisterPushTokenRequest {
+  /** Token de Expo, con forma `ExponentPushToken[...]`. */
+  token: string;
+  /** Para saber si el problema es de una plataforma cuando algo no llega. */
+  platform: 'ios' | 'android' | 'web';
+}
+
+/**
+ * Resultado del envío de un aviso, para que el que dispara sepa si llegó.
+ *
+ * No se usa para decidir nada en la app del chico/a —el aviso ya quedó
+ * guardado y el polling lo va a mostrar igual— pero sirve para diagnosticar
+ * por qué una familia no recibe nada.
+ */
+export interface PushDeliveryReport {
+  /** Dispositivos a los que se intentó mandar. */
+  attempted: number;
+  /** Cuántos aceptó Expo. */
+  accepted: number;
+  /** Tokens que Expo rechazó por muertos y se dieron de baja. */
+  removed: number;
+}

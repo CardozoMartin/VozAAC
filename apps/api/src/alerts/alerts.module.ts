@@ -5,11 +5,18 @@ import { Pictogram } from '../pictograms/entities/pictogram.entity';
 import { AlertsService } from './alerts.service';
 import { AlertsController, UserAlertsController } from './alerts.controller';
 import { UsersModule } from '../users/users.module';
+import { DevicesModule } from '../devices/devices.module';
 
 @Module({
   // De UsersModule vienen los repositorios de User y ProfileCaregiver, que el
   // servicio necesita para resolver quién es responsable de quién.
-  imports: [TypeOrmModule.forFeature([Alert, Pictogram]), UsersModule],
+  imports: [
+    TypeOrmModule.forFeature([Alert, Pictogram]),
+    UsersModule,
+    // De DevicesModule viene PushService, que manda el aviso a los teléfonos
+    // de los responsables vinculados (Módulo 9, paso 5).
+    DevicesModule,
+  ],
   controllers: [AlertsController, UserAlertsController],
   providers: [AlertsService],
   exports: [AlertsService],

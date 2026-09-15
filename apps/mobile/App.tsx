@@ -14,6 +14,7 @@ import { PinGateScreen } from './src/screens/PinGateScreen';
 import { EditorScreen } from './src/screens/EditorScreen';
 import { AccessibilityScreen } from './src/screens/AccessibilityScreen';
 import { session } from './src/state/session';
+import { usePushRegistration, unregisterPush } from './src/state/usePushRegistration';
 import { withSession } from './src/api/authenticated';
 import { api } from './src/api/client';
 import { paletteFor } from './src/theme';
@@ -44,7 +45,19 @@ export default function App() {
    * perfiles, porque su perfil ya quedó fijado al vincularlo.
    */
   const [deviceKind, setDeviceKind] = useState<DeviceKind | null>(null);
+  /**
+   * Sesión de dispositivo, cuando este se vinculó por código.
+   *
+   * Viaja al registrar el push para que el backend no le devuelva el aviso al
+   * propio dispositivo del chico/a (Módulo 9, paso 5).
+   */
+  const [deviceSessionId, setDeviceSessionId] = useState<string | null>(null);
   const palette = paletteFor(undefined);
+
+  // Registra este dispositivo para recibir los avisos urgentes. El estado se
+  // pasa a la bandeja: un responsable que cree que le van a llegar y no le
+  // llegan está peor que uno que sabe que tiene que revisar la app.
+  const pushStatus = usePushRegistration(token, deviceSessionId);
 
   const esDispositivoDeChico = deviceKind === DeviceKind.CHILD;
 
@@ -56,10 +69,19 @@ export default function App() {
    * el cual renovarlo.
    */
   const cerrarSesion = useCallback(async () => {
+    // La baja del push va antes de limpiar la sesión porque necesita el token
+    // para autenticarse. Si no, el teléfono de quien se fue seguiría recibiendo
+    // los avisos del chico/a.
+    const guardada = await session.load();
+    if (guardada.token) {
+      await unregisterPush(guardada.token);
+    }
+
     await session.clear();
     setProfile(null);
     setProfiles([]);
     setDeviceKind(null);
+    setDeviceSessionId(null);
     setMode('communicator');
     setToken(null);
   }, []);
@@ -87,6 +109,9 @@ export default function App() {
 
       setToken(guardada.token);
       setDeviceKind(guardada.deviceKind);
+      // Sin esto, después de reiniciar la app la tablet del chico/a volvería a
+      // recibir sus propios avisos: el backend no tendría con qué excluirla.
+      setDeviceSessionId(guardada.deviceSessionId);
 
       try {
         const lista = await withSession(guardada.token, (t) => api.profiles(t));
@@ -130,9 +155,13 @@ export default function App() {
       refreshToken: respuesta.refreshToken,
       deviceKind: respuesta.device.kind,
       profileId: respuesta.profile?.id ?? null,
+      // Se guarda para el registro de push: es lo que le permite al backend no
+      // devolverle el aviso al propio dispositivo del chico/a.
+      deviceSessionId: respuesta.device.id,
     });
 
     setToken(respuesta.accessToken);
+    setDeviceSessionId(respuesta.device.id);
     setDeviceKind(respuesta.device.kind);
     setProfile(respuesta.profile);
     setProfiles(respuesta.profile ? [respuesta.profile] : []);
@@ -184,7 +213,13 @@ export default function App() {
       );
     }
     if (mode === 'alerts') {
-      return <AlertsScreen token={token} onExit={() => setMode('communicator')} />;
+      return (
+        <AlertsScreen
+          token={token}
+          pushStatus={pushStatus}
+          onExit={() => setMode('communicator')}
+        />
+      );
     }
     if (mode === 'caregivers') {
       return (

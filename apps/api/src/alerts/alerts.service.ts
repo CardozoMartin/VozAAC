@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { Alert as AlertDto } from '@vozaac/shared';
@@ -7,12 +7,15 @@ import { Pictogram } from '../pictograms/entities/pictogram.entity';
 import { ProfileCaregiver } from '../users/entities/profile-caregiver.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateAlertDto } from './dto/create-alert.dto';
+import { PushService } from '../devices/push.service';
 
 /** Cuántas alertas devuelve la bandeja como máximo. */
 const MAX_ALERTS = 100;
 
 @Injectable()
 export class AlertsService {
+  private readonly logger = new Logger(AlertsService.name);
+
   constructor(
     @InjectRepository(Alert)
     private readonly alertsRepository: Repository<Alert>,
@@ -22,6 +25,7 @@ export class AlertsService {
     private readonly linksRepository: Repository<ProfileCaregiver>,
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    private readonly pushService: PushService,
   ) {}
 
   /**
@@ -31,7 +35,17 @@ export class AlertsService {
    * tablero. Lo primero evita que un error de la app convierta cualquier toque
    * en una notificación; lo segundo es la regla de siempre.
    */
-  async create(userId: string, caregiverId: string, dto: CreateAlertDto): Promise<AlertDto> {
+  async create(
+    userId: string,
+    caregiverId: string,
+    dto: CreateAlertDto,
+    /**
+     * Sesión del dispositivo que disparó el aviso, para no mandarle el push a
+     * la propia tablet del chico/a. Null cuando lo dispara un cuidador desde
+     * su cuenta, que no tiene sesión de dispositivo.
+     */
+    originDeviceSessionId: string | null = null,
+  ): Promise<AlertDto> {
     const user = await this.usersRepository.findOne({
       where: { id: userId, caregiverLinks: { caregiverId } },
     });
@@ -67,6 +81,24 @@ export class AlertsService {
         acknowledgedByCaregiverId: null,
       }),
     );
+
+    // El push va después de guardar y sin await sobre su resultado: el aviso ya
+    // está persistido, así que si Expo tarda o falla el chico/a no tiene que
+    // esperarlo ni recibir un error. Lo que no llegue por push lo va a mostrar
+    // el polling cuando el responsable abra la app (Módulo 9, paso 5).
+    void this.pushService
+      .notifyUrgentAlert({
+        userId,
+        profileName: user.name,
+        pictogramText: pictogram.text,
+        alertId: saved.id,
+        originDeviceSessionId: originDeviceSessionId ?? null,
+      })
+      .catch((error: unknown) => {
+        this.logger.warn(
+          `El aviso ${saved.id} se guardó pero no se pudo notificar: ${String(error)}`,
+        );
+      });
 
     return this.toDto(saved, user.name, null);
   }

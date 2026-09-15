@@ -21,9 +21,11 @@ import {
   UserProfile,
 } from '@vozaac/shared';
 import { DevicesService } from './devices.service';
+import { PushService } from './push.service';
 import { CreateLinkCodeDto } from './dto/create-link-code.dto';
 import { RedeemLinkCodeDto } from './dto/redeem-link-code.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { RegisterPushTokenDto } from './dto/register-push-token.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentCaregiver } from '../auth/decorators/current-caregiver.decorator';
 import { Caregiver } from '../caregivers/entities/caregiver.entity';
@@ -40,6 +42,7 @@ import { UsersService } from '../users/users.service';
 export class DevicesController {
   constructor(
     private readonly devicesService: DevicesService,
+    private readonly pushService: PushService,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
@@ -105,6 +108,38 @@ export class DevicesController {
   @UseGuards(JwtAuthGuard)
   list(@CurrentCaregiver() caregiver: Caregiver): Promise<LinkedDevice[]> {
     return this.devicesService.listDevices(caregiver.id);
+  }
+
+  /**
+   * Registra el dispositivo para recibir avisos push (Módulo 9, paso 5).
+   *
+   * La app llama a esto en cada arranque y no sólo la primera vez: el token de
+   * Expo cambia si reinstalan la app, y un token viejo no da error al enviar,
+   * simplemente no llega a nadie. Reenviarlo siempre es la forma barata de que
+   * eso no pase inadvertido.
+   */
+  @Post('push-token')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  registerPushToken(
+    @CurrentCaregiver() caregiver: Caregiver,
+    @Body() dto: RegisterPushTokenDto,
+  ): Promise<void> {
+    return this.pushService.register(caregiver.id, dto, dto.deviceSessionId ?? null);
+  }
+
+  /**
+   * Da de baja el token al cerrar sesión.
+   *
+   * Sin esto, el teléfono de alguien que se fue de la familia seguiría
+   * recibiendo los avisos del chico/a, que es un problema de privacidad y no
+   * sólo una molestia.
+   */
+  @Delete('push-token/:token')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  unregisterPushToken(@Param('token') token: string): Promise<void> {
+    return this.pushService.unregister(token);
   }
 
   @Delete(':id')

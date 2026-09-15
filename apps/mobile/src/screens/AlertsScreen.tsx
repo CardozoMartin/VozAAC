@@ -10,11 +10,38 @@ import {
 } from 'react-native';
 import { URGENT_ALERT, type Alert } from '@vozaac/shared';
 import { api } from '../api/client';
+import type { PushStatus } from '../state/usePushRegistration';
 import { paletteFor, radius, spacing, touchTarget, typography } from '../theme';
 
 interface Props {
   token: string;
   onExit: () => void;
+  /**
+   * Si este dispositivo va a recibir los avisos por push.
+   *
+   * Se muestra porque un responsable que cree que le van a sonar y no le suenan
+   * está peor que uno que sabe que tiene que entrar a mirar.
+   */
+  pushStatus?: PushStatus;
+}
+
+/**
+ * Qué decirle al adulto según cómo quedó el registro de push.
+ *
+ * Sólo se avisa cuando hay algo que él pueda entender o resolver: el caso
+ * 'ready' no dice nada, porque "vas a recibir avisos" es lo que ya espera.
+ */
+function avisoDePush(status: PushStatus | undefined): string | null {
+  switch (status) {
+    case 'denied':
+      return 'Las notificaciones están desactivadas para VozAAC. Los avisos van a aparecer acá, pero el teléfono no va a sonar.';
+    case 'unsupported':
+      return 'En esta versión de prueba el teléfono no suena: los avisos aparecen acá al abrir la pantalla.';
+    case 'failed':
+      return 'No se pudo activar el aviso sonoro en este dispositivo. Los avisos igual aparecen acá.';
+    default:
+      return null;
+  }
 }
 
 /**
@@ -28,7 +55,7 @@ interface Props {
  * funciona en Expo Go, sin development build ni credenciales, y el circuito
  * queda probado entero para sumarle push encima sin rehacer nada.
  */
-export function AlertsScreen({ token, onExit }: Props) {
+export function AlertsScreen({ token, onExit, pushStatus }: Props) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,6 +128,15 @@ export function AlertsScreen({ token, onExit }: Props) {
       {error && (
         <Text testID="alerts-error" style={[styles.error, { color: palette.danger }]}>
           {error}
+        </Text>
+      )}
+
+      {avisoDePush(pushStatus) && (
+        <Text
+          testID="push-status"
+          style={[styles.pushAviso, { color: palette.textMuted, borderColor: palette.border }]}
+        >
+          {avisoDePush(pushStatus)}
         </Text>
       )}
 
@@ -219,6 +255,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ackText: { color: '#FFFFFF', ...typography.button },
+  pushAviso: {
+    ...typography.caption,
+    borderWidth: 1,
+    borderRadius: radius.card,
+    padding: spacing.sm,
+  },
   error: typography.body,
   secondary: {
     borderWidth: 1,

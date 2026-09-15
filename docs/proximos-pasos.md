@@ -1,6 +1,6 @@
 # Próximos pasos
 
-Estado al 14 de septiembre de 2026, rama `dev`.
+Estado al 15 de septiembre de 2026, rama `dev`.
 
 ## Dónde quedamos
 
@@ -19,11 +19,13 @@ para que una familia pudiera usar el proyecto sin tocar la base a mano.
 | `eede357` | Última pantalla migrada a los tokens              |
 
 El Módulo 9 está completo: vinculación por código con sesión que no expira,
-varios responsables por chico/a, y alertas de pictogramas urgentes.
+varios responsables por chico/a, alertas de pictogramas urgentes y
+notificaciones push a los responsables vinculados.
 
-378 tests en verde: 89 unitarios de la API, 149 e2e, 10 de integración y 130 de
-la app. Corridos sobre `dev` el 14 de septiembre, después de la migración de
-tokens: ninguna pantalla se rompió al cambiar de estilos sueltos a tokens.
+387 tests en verde: 98 unitarios de la API, 149 e2e, 10 de integración y 130
+de la app. Corridos sobre `dev` el 15 de septiembre, después de sumar el push:
+los e2e de vinculación siguen pasando con las dos rutas nuevas de
+`/devices/push-token`, que era el riesgo de tocar ese controller.
 
 ## Ramas
 
@@ -72,7 +74,8 @@ salida al editor.
 1. ~~Registro, alta de perfiles y restaurar la sesión~~ — hecho en `6ee3efb`
 2. ~~Vinculación por código + sesión que no expira~~ — hecho
 3. ~~Varios responsables por chico/a~~ — hecho
-4. ~~Pictogramas urgentes + alertas~~ — hecho, sin push
+4. ~~Pictogramas urgentes + alertas~~ — hecho
+5. ~~Notificaciones push a los responsables vinculados~~ — hecho
 
 ### Cómo quedó la vinculación
 
@@ -141,23 +144,60 @@ migrado antes del piloto como convenía.
 
 ~~**`Pictogram` no tiene campo de urgencia.**~~ Resuelto con `isUrgent`.
 
+### Cómo quedaron las notificaciones push
+
+Cuando el chico/a toca un pictograma urgente, el aviso sale por push a **todos
+los responsables vinculados al perfil** —la madre que creó la cuenta, el padre,
+la hermana— en todos sus dispositivos. El envío va por la Expo Push API, que
+resuelve Android e iOS con un solo token y sin guardar credenciales de Google ni
+de Apple en este backend.
+
+El dispositivo del propio chico/a queda excluido. Es menos obvio de lo que
+parece: su tablet cuelga del cuidador que la enroló, así que sin distinguirla
+recibiría su propio aviso de dolor como si alguien le estuviera hablando. La
+exclusión se hace por `deviceSessionId`, que la app guarda al vincularse y
+restaura en cada arranque.
+
+**El polling de veinte segundos sigue existiendo y es la red de seguridad.** Si
+el push no sale —permiso denegado, token vencido, Expo caído— el aviso igual
+aparece cuando el responsable abre la app. El envío es best-effort a propósito:
+nunca hace fallar el `POST` del chico/a, porque desde su lado el aviso sí salió.
+El estado del registro se le muestra al adulto en la bandeja, porque uno que
+cree que le van a sonar los avisos y no le suenan está peor que uno que sabe que
+tiene que entrar a mirar.
+
+Los tokens muertos se dan de baja solos cuando Expo contesta
+`DeviceNotRegistered`, que es el único error que se arregla borrando. Un rate
+limit o un problema de Expo son transitorios y no le cuestan el token a nadie.
+
+### Lo que falta antes de poder probar el push en un teléfono
+
+Nada de esto es código: el circuito está implementado y verificado contra la
+base. Son pasos de configuración que hay que hacer una vez.
+
+1. **Cuenta de Expo y `projectId` de EAS.** `npx eas init` dentro de
+   `apps/mobile` deja el `projectId` en `app.json`. El hook ya lo lee de
+   `Constants.expoConfig.extra.eas.projectId`, así que no hay que tocar código.
+2. **Development build.** Expo Go no recibe push remotas desde el SDK 53. Con
+   `npx eas build --platform android --profile development` sale el APK; en la
+   nube son entre diez y veinte minutos de cola, o local con
+   `--local` porque el SDK de Android ya está configurado en esta máquina.
+3. **Credenciales de FCM.** EAS las genera y sube solo durante el build; sólo
+   hace falta intervenir si se quiere usar un proyecto de Firebase propio.
+4. **API alcanzable desde el teléfono.** Hoy la API corre en `localhost:3010`.
+   Para un teléfono real hace falta que esté en la misma red —y que la red no
+   aísle los clientes— o un túnel.
+
+**Con un solo celular alcanza.** El chico/a no necesita ser un dispositivo
+físico: el aviso se dispara desde el emulador, la web o un `curl` a la API, y el
+push llega al teléfono del cuidador. Dos celulares sirven para la demo de la
+defensa —la tablet del chico/a y el teléfono de la madre lado a lado— pero no
+agregan nada técnico.
+
 ### Lo que queda del Módulo 9
 
-**Push de verdad.** Hoy la app consulta cada veinte segundos, así que con la
-app cerrada el aviso no suena. Alcanza para el piloto y deja el circuito
-probado, pero para uso real hace falta un development build con credenciales de
-Expo. **WhatsApp o SMS** sería el paso siguiente, y además llega a responsables
-sin smartphone.
-
-### Cómo llegan las alertas
-
-Se arranca sin push: las alertas se guardan en el backend y la app del
-responsable las consulta. Funciona en Expo Go, sin development build ni
-credenciales, y deja el circuito completo probado para sumarle push encima sin
-rehacer nada. Expo Go no recibe notificaciones push reales.
-
-Más adelante se puede sumar WhatsApp o SMS, que además llegan a responsables
-sin smartphone.
+**WhatsApp o SMS.** Es el paso siguiente y llega a responsables sin smartphone,
+que en una familia extendida es un caso real y no un detalle.
 
 ### Criterio: qué avisa y qué no
 

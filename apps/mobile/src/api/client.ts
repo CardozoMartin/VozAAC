@@ -248,6 +248,33 @@ export const api = {
   acknowledgeAlert: (token: string, alertId: string) =>
     request<Alert>(`/alerts/${alertId}/acknowledge`, token, { method: 'POST' }),
 
+  // --- Notificaciones push (Módulo 9, paso 5) ---
+
+  /**
+   * Registra este dispositivo para recibir avisos push.
+   *
+   * Se llama en cada arranque, no sólo la primera vez: el token de Expo cambia
+   * si reinstalan la app, y un token viejo no da error al enviar —simplemente
+   * no llega a nadie—, así que reenviarlo es la forma de que eso no pase
+   * inadvertido.
+   */
+  registerPushToken: (
+    token: string,
+    pushToken: string,
+    platform: 'ios' | 'android' | 'web',
+    deviceSessionId?: string,
+  ) =>
+    request<void>('/devices/push-token', token, {
+      method: 'POST',
+      body: JSON.stringify({ token: pushToken, platform, deviceSessionId }),
+    }),
+
+  /** Da de baja el token al cerrar sesión, para no seguir avisando a quien se fue. */
+  unregisterPushToken: (token: string, pushToken: string) =>
+    request<void>(`/devices/push-token/${encodeURIComponent(pushToken)}`, token, {
+      method: 'DELETE',
+    }),
+
   defaultBoard: (token: string, userId: string) =>
     request<Board>(`/users/${userId}/boards/default`, token),
 
